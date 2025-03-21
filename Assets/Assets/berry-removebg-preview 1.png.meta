@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      berry-removebg-preview 1_0: 8730235106466596854
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

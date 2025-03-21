@@ -397,7 +397,18 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      mountain_landscape_0: -5676962282622034325
+      mountain_landscape_1: 4714985726994352158
+      mountain_landscape_10: -3399804870439798714
+      mountain_landscape_2: 2103169884219274275
+      mountain_landscape_3: 6265645322224986120
+      mountain_landscape_4: 2426334983239376509
+      mountain_landscape_5: -5041367268679388185
+      mountain_landscape_6: -2944841338245173413
+      mountain_landscape_7: 1693884695867290123
+      mountain_landscape_8: 710522723162109960
+      mountain_landscape_9: 2641592877866963074
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

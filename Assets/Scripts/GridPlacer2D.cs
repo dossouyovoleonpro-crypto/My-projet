@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;  // Nécessaire pour détecter les clics sur l'UI
 
 public class GridPlacer2D : MonoBehaviour
 {
@@ -6,6 +7,10 @@ public class GridPlacer2D : MonoBehaviour
 
     void Update()
     {
+        // 🚫 Si la souris est sur un élément UI, on ne fait rien
+        if (EventSystem.current.IsPointerOverGameObject())
+            return;
+
         if (Input.GetMouseButtonDown(0))  // Si on clique avec le bouton gauche
         {
             Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);  // Position de la souris dans le monde

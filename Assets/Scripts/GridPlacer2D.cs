@@ -1,11 +1,17 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using System.Collections.Generic;
 
 public class GridPlacer2D : MonoBehaviour
 {
     public LayerMask clickableLayer;
 
-    private bool feuDeCampPlace = false;
+    // Dictionnaire pour suivre les objets uniques placés
+    private Dictionary<string, bool> uniquePlaced = new Dictionary<string, bool>
+    {
+        { "Feu", false },
+        { "Mairie", false }
+    };
 
     void Update()
     {
@@ -21,11 +27,14 @@ public class GridPlacer2D : MonoBehaviour
 
             if (BuildManager.Instance.IsDeleteMode())
             {
-                // Si on supprime un feu de camp, réactive le droit d’en poser un
-                if (hit.collider.gameObject.name.Contains("Feu"))
+                foreach (var key in uniquePlaced.Keys)
                 {
-                    feuDeCampPlace = false;
-                    Debug.Log("Feu de camp supprimé.");
+                    if (hit.collider.gameObject.name.Contains(key))
+                    {
+                        uniquePlaced[key] = false;
+                        Debug.Log(key + " supprimé.");
+                        break;
+                    }
                 }
 
                 Destroy(hit.collider.gameObject);
@@ -36,11 +45,18 @@ public class GridPlacer2D : MonoBehaviour
                 GameObject prefab = BuildManager.Instance.GetSelectedPrefab();
                 if (prefab == null) return;
 
-                // Blocage uniquement pour le feu de camp
-                if (prefab.name.Contains("Feu") && feuDeCampPlace)
+                // Vérifie si le prefab est dans les objets uniques
+                foreach (var key in uniquePlaced.Keys)
                 {
-                    Debug.Log("Un seul feu de camp est autorisé.");
-                    return;
+                    if (prefab.name.Contains(key))
+                    {
+                        if (uniquePlaced[key])
+                        {
+                            Debug.Log("Un seul " + key + " est autorisé.");
+                            return;
+                        }
+                        break;
+                    }
                 }
 
                 Vector2 spawnPos = new Vector2(
@@ -51,9 +67,15 @@ public class GridPlacer2D : MonoBehaviour
                 Instantiate(prefab, spawnPos, Quaternion.identity);
                 Debug.Log("Prefab placé : " + prefab.name);
 
-                // Marquer le feu de camp comme placé
-                if (prefab.name.Contains("Feu"))
-                    feuDeCampPlace = true;
+                // Marque comme placé si c’est un objet unique
+                foreach (var key in uniquePlaced.Keys)
+                {
+                    if (prefab.name.Contains(key))
+                    {
+                        uniquePlaced[key] = true;
+                        break;
+                    }
+                }
             }
         }
     }

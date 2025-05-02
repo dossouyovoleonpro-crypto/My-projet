@@ -1,45 +1,59 @@
 using UnityEngine;
-using UnityEngine.EventSystems;  // Nécessaire pour détecter les clics sur l'UI
+using UnityEngine.EventSystems;
 
 public class GridPlacer2D : MonoBehaviour
 {
-    public LayerMask clickableLayer;  // Ce layer ne doit inclure que les objets cliquables (par ex. chemins)
+    public LayerMask clickableLayer;
+
+    private bool feuDeCampPlace = false;
 
     void Update()
     {
-        // 🚫 Si la souris est sur un élément UI, on ne fait rien
         if (EventSystem.current.IsPointerOverGameObject())
             return;
 
-        if (Input.GetMouseButtonDown(0))  // Si on clique avec le bouton gauche
+        if (Input.GetMouseButtonDown(0))
         {
-            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);  // Position de la souris dans le monde
-
-            // Raycast pour détecter l'objet sous le clic, avec un LayerMask spécifique
+            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero, Mathf.Infinity, clickableLayer);
 
-            if (hit.collider == null) return;  // Si rien n'est touché, on arrête ici
+            if (hit.collider == null) return;
 
-            if (BuildManager.Instance.IsDeleteMode())  // Si le mode suppression est activé
+            if (BuildManager.Instance.IsDeleteMode())
             {
-                // 🗑️ On supprime l'objet cliqué (seulement si c'est dans le bon layer)
+                // Si on supprime un feu de camp, réactive le droit d’en poser un
+                if (hit.collider.gameObject.name.Contains("Feu"))
+                {
+                    feuDeCampPlace = false;
+                    Debug.Log("Feu de camp supprimé.");
+                }
+
                 Destroy(hit.collider.gameObject);
                 Debug.Log("Objet supprimé : " + hit.collider.name);
             }
             else
             {
-                // Si on est en mode placement, on place le prefab sélectionné
                 GameObject prefab = BuildManager.Instance.GetSelectedPrefab();
-                if (prefab == null) return;  // Si aucun prefab n'est sélectionné, on arrête ici
+                if (prefab == null) return;
 
-                // Position de spawn du prefab (pour bien l'aligner sur la grille)
+                // Blocage uniquement pour le feu de camp
+                if (prefab.name.Contains("Feu") && feuDeCampPlace)
+                {
+                    Debug.Log("Un seul feu de camp est autorisé.");
+                    return;
+                }
+
                 Vector2 spawnPos = new Vector2(
                     Mathf.Floor(mousePos.x) + 0.5f,
                     Mathf.Floor(mousePos.y) + 0.5f
                 );
 
-                Instantiate(prefab, spawnPos, Quaternion.identity);  // On place le prefab à la position calculée
+                Instantiate(prefab, spawnPos, Quaternion.identity);
                 Debug.Log("Prefab placé : " + prefab.name);
+
+                // Marquer le feu de camp comme placé
+                if (prefab.name.Contains("Feu"))
+                    feuDeCampPlace = true;
             }
         }
     }

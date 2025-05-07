@@ -12,26 +12,35 @@ public class BuildButton : MonoBehaviour
 
     void OnClick()
     {
-        if (BuildManager.Instance.IsDeleteMode())  // Si le mode suppression est activé
+        if (BuildManager.Instance.IsDeleteMode())
         {
-            // Si le mode suppression est actif, on ne sélectionne pas de prefab
-            Debug.Log("Mode suppression activé, ne peut pas sélectionner le chemin.");
+            Debug.Log("Mode suppression activé.");
+            return;
+        }
+
+        // Empêche la sélection d'un unique déjà placé
+        if (GridPlacer2D.Instance != null && GridPlacer2D.Instance.IsUniquePlaced(prefabToPlace.name))
+        {
+            Debug.Log("Impossible de sélectionner : un seul " + prefabToPlace.name + " autorisé.");
+            return;
+        }
+
+        BuildingCost cost = prefabToPlace.GetComponent<BuildingCost>();
+        if (cost != null && !ResourceManager.Instance.HasEnoughResources(cost))
+        {
+            Debug.Log("Pas assez de ressources !");
+            return;
+        }
+
+        if (BuildManager.Instance.GetSelectedPrefab() == prefabToPlace)
+        {
+            BuildManager.Instance.DeselectPrefab();
+            Debug.Log("Placement désactivé.");
         }
         else
         {
-            // Sinon on sélectionne le prefab pour le placement
-            if (BuildManager.Instance.GetSelectedPrefab() == prefabToPlace)
-            {
-                // Si le prefab est déjà sélectionné, on désélectionne
-                BuildManager.Instance.DeselectPrefab();
-                Debug.Log("Placement désactivé.");
-            }
-            else
-            {
-                // Sélectionne le prefab à placer
-                BuildManager.Instance.SelectPrefab(prefabToPlace);
-                Debug.Log("Prefab sélectionné : " + prefabToPlace.name);
-            }
+            BuildManager.Instance.SelectPrefab(prefabToPlace);
+            Debug.Log("Prefab sélectionné : " + prefabToPlace.name);
         }
     }
 }

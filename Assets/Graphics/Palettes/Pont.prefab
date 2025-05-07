@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7114873797248671901}
   - component: {fileID: 4098927732387590704}
+  - component: {fileID: 4555262233970854308}
   m_Layer: 0
   m_Name: Pont
   m_TagString: Untagged
@@ -45,6 +46,23 @@ Grid:
   m_CellGap: {x: 0, y: 0, z: 0}
   m_CellLayout: 0
   m_CellSwizzle: 0
+--- !u!114 &4555262233970854308
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2469102068779805505}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5eea7c298aeb2994fab918184e783465, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  woodCost: 100
+  stoneCost: 0
+  foodCost: 0
+  ironCost: 0
+  goldCost: 0
 --- !u!1 &3648720675558812638
 GameObject:
   m_ObjectHideFlags: 0

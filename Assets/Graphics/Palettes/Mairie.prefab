@@ -167,6 +167,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4297881102129711318}
   - component: {fileID: 8701986969430030764}
+  - component: {fileID: -1102258823213914323}
   m_Layer: 0
   m_Name: Mairie
   m_TagString: Untagged
@@ -202,6 +203,23 @@ Grid:
   m_CellGap: {x: 0, y: 0, z: 0}
   m_CellLayout: 0
   m_CellSwizzle: 0
+--- !u!114 &-1102258823213914323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7861550963397988869}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5eea7c298aeb2994fab918184e783465, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  woodCost: 100
+  stoneCost: 100
+  foodCost: 0
+  ironCost: 0
+  goldCost: 0
 --- !u!114 &1751743854975391575
 MonoBehaviour:
   m_ObjectHideFlags: 0

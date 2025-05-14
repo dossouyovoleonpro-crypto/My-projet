@@ -18,13 +18,6 @@ public class BuildButton : MonoBehaviour
             return;
         }
 
-        // Empêche la sélection d'un unique déjà placé
-        if (GridPlacer2D.Instance != null && GridPlacer2D.Instance.IsUniquePlaced(prefabToPlace.name))
-        {
-            Debug.Log("Impossible de sélectionner : un seul " + prefabToPlace.name + " autorisé.");
-            return;
-        }
-
         BuildingCost cost = prefabToPlace.GetComponent<BuildingCost>();
         if (cost != null && !ResourceManager.Instance.HasEnoughResources(cost))
         {

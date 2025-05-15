@@ -167,6 +167,7 @@ GameObject:
   m_Component:
   - component: {fileID: 102328100721410705}
   - component: {fileID: 1666715174222731543}
+  - component: {fileID: 3082898754033131268}
   m_Layer: 0
   m_Name: Shop
   m_TagString: Buildings
@@ -202,6 +203,23 @@ Grid:
   m_CellGap: {x: 0, y: 0, z: 0}
   m_CellLayout: 0
   m_CellSwizzle: 0
+--- !u!114 &3082898754033131268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5807714372041545757}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5eea7c298aeb2994fab918184e783465, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  woodCost: 200
+  stoneCost: 200
+  foodCost: 200
+  ironCost: 0
+  goldCost: 0
 --- !u!114 &9119931293884111781
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -22,17 +22,19 @@ public class SaveManager : MonoBehaviour
     void Awake()
     {
         savePath = Application.persistentDataPath + "/save.json";
+        Debug.Log("💾 [SaveManager] AWAKENED !");
         Debug.Log($"💾 Chemin de sauvegarde : {savePath}");
     }
 
     void Start()
     {
-        LoadGame(); // Chargement automatique au démarrage
+        Debug.Log("📂 [SaveManager] Start() appelé, tentative de chargement de la sauvegarde.");
+        LoadGame();
     }
 
     void OnApplicationQuit()
     {
-        Debug.Log("⛔ Fermeture du jeu : sauvegarde automatique...");
+        Debug.Log("⛔ [SaveManager] OnApplicationQuit() appelé, sauvegarde automatique en cours...");
         SaveGame();
     }
 
@@ -57,14 +59,14 @@ public class SaveManager : MonoBehaviour
         string json = JsonUtility.ToJson(data, true);
         File.WriteAllText(savePath, json);
 
-        Debug.Log($"✅ Sauvegarde effectuée à : {savePath}");
+        Debug.Log($"✅ [SaveManager] Sauvegarde effectuée à : {savePath}");
     }
 
     public void LoadGame()
     {
         if (!File.Exists(savePath))
         {
-            Debug.LogWarning("⚠️ Aucune sauvegarde trouvée !");
+            Debug.LogWarning("⚠️ [SaveManager] Aucune sauvegarde trouvée !");
             return;
         }
 
@@ -86,31 +88,31 @@ public class SaveManager : MonoBehaviour
             {
                 GameObject newObj = Instantiate(prefab, bData.position, Quaternion.identity);
 
-                // Réassigner l’identifiant pour les futures sauvegardes
+                // Réassigner l’identifiant pour la prochaine sauvegarde
                 BuildingIdentifier identifier = newObj.AddComponent<BuildingIdentifier>();
                 identifier.prefabName = bData.prefabName;
             }
             else
             {
-                Debug.LogWarning($"❌ Prefab non trouvé : {bData.prefabName}. Vérifie qu'il est bien dans 'Resources/Prefabs/'.");
+                Debug.LogWarning($"❌ [SaveManager] Prefab non trouvé : {bData.prefabName}. Vérifie qu'il est bien dans 'Resources/Prefabs/'.");
             }
         }
 
-        Debug.Log("📥 Chargement terminé !");
+        Debug.Log("📥 [SaveManager] Chargement terminé !");
     }
 
     void Update()
     {
-        // Changement des touches pour éviter tout conflit : 
+        // Raccourcis pour tests rapides
         if (Input.GetKeyDown(KeyCode.K)) // K = Save
         {
-            Debug.Log("💾 Sauvegarde manuelle via touche K.");
+            Debug.Log("💾 [SaveManager] Sauvegarde manuelle via touche K.");
             SaveGame();
         }
 
         if (Input.GetKeyDown(KeyCode.L)) // L = Load
         {
-            Debug.Log("📂 Chargement manuel via touche L.");
+            Debug.Log("📂 [SaveManager] Chargement manuel via touche L.");
             LoadGame();
         }
     }

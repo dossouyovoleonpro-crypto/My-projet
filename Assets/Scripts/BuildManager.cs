@@ -6,9 +6,13 @@ public class BuildManager : MonoBehaviour
 
     private GameObject selectedPrefab;
     private bool deleteMode = false;
-    private bool isPlacingPrefab = false; // Indique si on est en train de placer un prefab
+    private bool isPlacingPrefab = false;
 
     private Camera mainCamera;
+
+    // Gestion du Ghost (Aperçu du bâtiment)
+    private GameObject ghostInstance;
+    public Material ghostMaterial; // À assigner dans l'inspecteur
 
     void Awake()
     {
@@ -17,90 +21,117 @@ public class BuildManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
         Instance = this;
     }
 
     void Start()
     {
-        mainCamera = Camera.main;  // Pour accéder à la caméra principale
+        mainCamera = Camera.main;
     }
 
-    // Sélectionner un prefab
+    void Update()
+    {
+        // Déplacement du ghost avec la souris
+        if (isPlacingPrefab && !deleteMode && ghostInstance != null)
+        {
+            Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 ghostPos = new Vector3(Mathf.Round(mousePosition.x), Mathf.Round(mousePosition.y), 0f);
+            ghostInstance.transform.position = ghostPos;
+        }
+
+        // Clic gauche pour placer l'objet
+        if (isPlacingPrefab && !deleteMode && Input.GetMouseButtonDown(0))
+        {
+            Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            PlacePrefab(mousePosition);
+        }
+    }
+
     public void SelectPrefab(GameObject prefab)
     {
         selectedPrefab = prefab;
-        isPlacingPrefab = true;  // Activer le mode placement
+        isPlacingPrefab = true;
+
+        // Détruire l'ancien ghost si existant
+        if (ghostInstance != null)
+            Destroy(ghostInstance);
+
+        // Créer le ghost
+        ghostInstance = Instantiate(selectedPrefab);
+        ApplyGhostVisual(ghostInstance);
     }
 
-    // Désélectionner un prefab
     public void DeselectPrefab()
     {
         selectedPrefab = null;
-        isPlacingPrefab = false;  // Désactiver le mode placement
+        isPlacingPrefab = false;
+
+        if (ghostInstance != null)
+            Destroy(ghostInstance);
     }
 
-    // Nouvelle méthode GetSelectedPrefab pour récupérer le prefab sélectionné
     public GameObject GetSelectedPrefab()
     {
         return selectedPrefab;
     }
 
-    // Vérifie si un prefab est sélectionné (et si on est en mode placement)
     public bool HasSelectedPrefab()
     {
         return selectedPrefab != null && isPlacingPrefab;
     }
 
-    // Passer en mode suppression
     public void SetDeleteMode(bool value)
     {
         deleteMode = value;
-
-        if (value)
-            DeselectPrefab(); // Désélectionne le prefab si on passe en mode suppression
+        if (value) DeselectPrefab();
     }
 
-    // Vérifie si on est en mode suppression
     public bool IsDeleteMode()
     {
         return deleteMode;
     }
 
-    // Mise à jour du placement en fonction des clics de la souris
-    void Update()
-    {
-        if (isPlacingPrefab && !deleteMode)
-        {
-            if (Input.GetMouseButtonDown(0)) // Si on clique avec la souris (clic gauche)
-            {
-                Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition); // Convertir la position de la souris en coordonnées du monde 2D
-                PlacePrefab(mousePosition); // Placer l'objet à cette position
-            }
-        }
-    }
-
-    // Placer le prefab à la position donnée
     public void PlacePrefab(Vector2 position)
     {
         if (selectedPrefab != null)
         {
             BuildingCost cost = selectedPrefab.GetComponent<BuildingCost>();
 
-            // Vérifie si l'utilisateur a suffisamment de ressources
             if (cost != null && ResourceManager.Instance.HasEnoughResources(cost))
             {
-                // Place le prefab à la position donnée dans le monde 2D
-                Instantiate(selectedPrefab, position, Quaternion.identity);
+                Vector3 placePosition = new Vector3(Mathf.Round(position.x), Mathf.Round(position.y), 0f);
+                Instantiate(selectedPrefab, placePosition, Quaternion.identity);
 
-                // Déduit les ressources nécessaires pour la construction
                 ResourceManager.Instance.SpendResources(cost);
-                // **Ne pas désélectionner automatiquement après le placement**
             }
             else
             {
                 Debug.Log("Pas assez de ressources pour construire !");
             }
+        }
+    }
+
+    private void ApplyGhostVisual(GameObject ghost)
+    {
+        SpriteRenderer[] renderers = ghost.GetComponentsInChildren<SpriteRenderer>();
+
+        foreach (var renderer in renderers)
+        {
+            if (ghostMaterial != null)
+            {
+                renderer.material = ghostMaterial;
+            }
+
+            // Assure la transparence même si aucun matériau n'est défini
+            Color color = renderer.color;
+            color.a = 0.5f;
+            renderer.color = color;
+        }
+
+        // Désactive tous les scripts de comportement du prefab pour le ghost
+        foreach (var script in ghost.GetComponents<MonoBehaviour>())
+        {
+            script.enabled = false;
         }
     }
 }

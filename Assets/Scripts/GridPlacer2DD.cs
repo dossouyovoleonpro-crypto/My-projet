@@ -29,7 +29,7 @@ public class GridPlacer2D : MonoBehaviour
             GameObject selectedPrefab = BuildManager.Instance.GetSelectedPrefab();
             if (selectedPrefab == null) return;
 
-            // Vérifie la validité du placement
+            // Vérification du placement valide
             if (!terrainMap.HasTile(cellPos) || obstacleMap.HasTile(cellPos))
             {
                 Debug.Log("Impossible de placer ici : pas de terrain ou obstacle présent.");
@@ -65,7 +65,13 @@ public class GridPlacer2D : MonoBehaviour
                     }
                 }
 
+                // Instanciation du bâtiment
                 GameObject newObj = Instantiate(selectedPrefab, worldAlignedPos, Quaternion.identity);
+
+                // Ajout de l’identifiant pour la sauvegarde
+                BuildingIdentifier identifier = newObj.AddComponent<BuildingIdentifier>();
+                identifier.prefabName = selectedPrefab.name;
+
                 Debug.Log("Objet placé : " + selectedPrefab.name);
 
                 foreach (var key in uniquePlaced.Keys)

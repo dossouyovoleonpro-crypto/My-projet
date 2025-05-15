@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      MeatUI3_0: 9207100194318948091
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

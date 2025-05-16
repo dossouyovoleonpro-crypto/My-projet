@@ -17,8 +17,7 @@ public class GridPlacer2D : MonoBehaviour
 
     void Update()
     {
-        if (EventSystem.current.IsPointerOverGameObject())
-            return;
+        if (EventSystem.current.IsPointerOverGameObject()) return;
 
         if (Input.GetMouseButtonDown(0))
         {
@@ -29,10 +28,9 @@ public class GridPlacer2D : MonoBehaviour
             GameObject selectedPrefab = BuildManager.Instance.GetSelectedPrefab();
             if (selectedPrefab == null) return;
 
-            // Vérification du placement valide
             if (!terrainMap.HasTile(cellPos) || obstacleMap.HasTile(cellPos))
             {
-                Debug.Log("Impossible de placer ici : pas de terrain ou obstacle présent.");
+                Debug.Log("❌ Impossible de placer ici : pas de terrain ou obstacle présent.");
                 return;
             }
 
@@ -60,19 +58,20 @@ public class GridPlacer2D : MonoBehaviour
                 {
                     if (selectedPrefab.name.Contains(key) && uniquePlaced[key])
                     {
-                        Debug.Log("Un seul " + key + " est autorisé.");
+                        Debug.Log("⚠️ Un seul " + key + " est autorisé.");
                         return;
                     }
                 }
 
-                // Instanciation du bâtiment
+                // Instanciation et paramétrage du bâtiment
                 GameObject newObj = Instantiate(selectedPrefab, worldAlignedPos, Quaternion.identity);
+                newObj.tag = "Building"; // ✅ Important pour la sauvegarde
 
-                // Ajout de l’identifiant pour la sauvegarde
+                // ✅ Ajout du BuildingIdentifier pour mémoriser le prefab d'origine
                 BuildingIdentifier identifier = newObj.AddComponent<BuildingIdentifier>();
                 identifier.prefabName = selectedPrefab.name;
 
-                Debug.Log("Objet placé : " + selectedPrefab.name);
+                Debug.Log($"🏗️ Objet placé : {selectedPrefab.name} à {worldAlignedPos}");
 
                 foreach (var key in uniquePlaced.Keys)
                 {

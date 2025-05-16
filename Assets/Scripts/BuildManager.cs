@@ -52,11 +52,10 @@ public class BuildManager : MonoBehaviour
         selectedPrefab = prefab;
         isPlacingPrefab = true;
 
-        // Détruire l'ancien ghost si existant
         if (ghostInstance != null)
             Destroy(ghostInstance);
 
-        // Créer le ghost
+        // Création du ghost
         ghostInstance = Instantiate(selectedPrefab);
         ApplyGhostVisual(ghostInstance);
     }
@@ -100,13 +99,21 @@ public class BuildManager : MonoBehaviour
             if (cost != null && ResourceManager.Instance.HasEnoughResources(cost))
             {
                 Vector3 placePosition = new Vector3(Mathf.Round(position.x), Mathf.Round(position.y), 0f);
-                Instantiate(selectedPrefab, placePosition, Quaternion.identity);
+
+                // ✅ Instanciation et configuration pour la sauvegarde
+                GameObject newObj = Instantiate(selectedPrefab, placePosition, Quaternion.identity);
+                newObj.tag = "Building"; // Important pour la sauvegarde
+
+                BuildingIdentifier identifier = newObj.AddComponent<BuildingIdentifier>();
+                identifier.prefabName = selectedPrefab.name;
+
+                Debug.Log($"🏗️ Bâtiment placé : {selectedPrefab.name} à {placePosition}");
 
                 ResourceManager.Instance.SpendResources(cost);
             }
             else
             {
-                Debug.Log("Pas assez de ressources pour construire !");
+                Debug.Log("❌ Pas assez de ressources pour construire !");
             }
         }
     }
@@ -122,13 +129,11 @@ public class BuildManager : MonoBehaviour
                 renderer.material = ghostMaterial;
             }
 
-            // Assure la transparence même si aucun matériau n'est défini
             Color color = renderer.color;
             color.a = 0.5f;
             renderer.color = color;
         }
 
-        // Désactive tous les scripts de comportement du prefab pour le ghost
         foreach (var script in ghost.GetComponents<MonoBehaviour>())
         {
             script.enabled = false;

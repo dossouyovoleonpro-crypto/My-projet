@@ -119,6 +119,20 @@ public class BuildManager : MonoBehaviour
 {
     if (selectedPrefab != null)
     {
+        // ✅ Vérification pour n'autoriser qu'un seul Feu
+        if (selectedPrefab.name.Contains("Feu") && GameObject.FindGameObjectWithTag("Feu") != null)
+        {
+            Debug.Log("❌ Un seul Feu est autorisé !");
+            return;
+        }
+
+        // ✅ Vérification pour n'autoriser qu'une seule Mairie
+        if (selectedPrefab.name.Contains("Mairie") && GameObject.FindGameObjectWithTag("Mairie") != null)
+        {
+            Debug.Log("❌ Une seule Mairie est autorisée !");
+            return;
+        }
+
         BuildingCost cost = selectedPrefab.GetComponent<BuildingCost>();
 
         if (cost != null && ResourceManager.Instance.HasEnoughResources(cost))
@@ -133,7 +147,21 @@ public class BuildManager : MonoBehaviour
             }
 
             GameObject newObj = Instantiate(selectedPrefab, placePos, Quaternion.identity);
-            newObj.tag = "Building";
+
+            // ✅ Assigner le bon tag
+            if (selectedPrefab.name.Contains("Feu"))
+            {
+                newObj.tag = "Feu";
+            }
+            else if (selectedPrefab.name.Contains("Mairie"))
+            {
+                newObj.tag = "Mairie";
+            }
+            else
+            {
+                newObj.tag = "Building";
+            }
+
             newObj.layer = LayerMask.NameToLayer("Building");
 
             // ✅ Ajout automatique d'un Collider2D si aucun n'existe
@@ -157,6 +185,7 @@ public class BuildManager : MonoBehaviour
         }
     }
 }
+
 
 
 

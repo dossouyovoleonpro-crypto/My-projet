@@ -22,19 +22,16 @@ public class SaveManager : MonoBehaviour
     void Awake()
     {
         savePath = Application.persistentDataPath + "/save.json";
-        Debug.Log("💾 [SaveManager] AWAKENED !");
-        Debug.Log($"💾 Chemin de sauvegarde : {savePath}");
+        Debug.Log($"💾 [SaveManager] Chemin de sauvegarde : {savePath}");
     }
 
     void Start()
     {
-        Debug.Log("📂 [SaveManager] Start() appelé, tentative de chargement de la sauvegarde.");
         LoadGame();
     }
 
     void OnApplicationQuit()
     {
-        Debug.Log("⛔ [SaveManager] OnApplicationQuit() appelé, sauvegarde automatique en cours...");
         SaveGame();
     }
 
@@ -88,7 +85,28 @@ public class SaveManager : MonoBehaviour
             {
                 GameObject newObj = Instantiate(prefab, bData.position, Quaternion.identity);
 
-                // Réassigner l’identifiant pour la prochaine sauvegarde
+                // ✅ Réassigner tag et layer
+                newObj.tag = "Building";
+                newObj.layer = LayerMask.NameToLayer("Building");
+
+                // ✅ Ajout d’un Collider2D si absent
+                BoxCollider2D collider = newObj.GetComponent<BoxCollider2D>();
+                if (collider == null)
+                {
+                    collider = newObj.AddComponent<BoxCollider2D>();
+                    Debug.Log($"🧩 Collider ajouté à {newObj.name}");
+                }
+
+                // ✅ Appliquer ColliderSettings s'il existe
+                ColliderSettings settings = newObj.GetComponent<ColliderSettings>();
+                if (settings != null)
+                {
+                    collider.size = settings.customSize;
+                    collider.offset = settings.customOffset;
+                    Debug.Log($"📏 Collider ajusté via ColliderSettings pour {newObj.name}");
+                }
+
+                // ✅ Réassigner l’identifiant pour la sauvegarde
                 BuildingIdentifier identifier = newObj.AddComponent<BuildingIdentifier>();
                 identifier.prefabName = bData.prefabName;
             }
@@ -101,9 +119,10 @@ public class SaveManager : MonoBehaviour
         Debug.Log("📥 [SaveManager] Chargement terminé !");
     }
 
+
     void Update()
     {
-        // Raccourcis pour tests rapides
+        // Raccourcis pour tests
         if (Input.GetKeyDown(KeyCode.K)) // K = Save
         {
             Debug.Log("💾 [SaveManager] Sauvegarde manuelle via touche K.");

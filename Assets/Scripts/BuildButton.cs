@@ -12,10 +12,17 @@ public class BuildButton : MonoBehaviour
 
     void OnClick()
     {
-        // Toujours désactiver le mode suppression quand on clique sur un bouton de construction
         if (BuildManager.Instance.IsDeleteMode())
         {
             BuildManager.Instance.SetDeleteMode(false);
+            
+            // ✅ Recherche et remet la couleur normale sur le bouton "Supprimer"
+            DeleteButton deleteButton = Object.FindFirstObjectByType<DeleteButton>();
+            if (deleteButton != null)
+            {
+                deleteButton.ResetButtonColor();
+            }
+
             Debug.Log("Mode suppression désactivé via bouton de construction.");
         }
 
@@ -26,7 +33,6 @@ public class BuildButton : MonoBehaviour
             return;
         }
 
-        // Activer ou désactiver le mode placement
         if (BuildManager.Instance.GetSelectedPrefab() == prefabToPlace)
         {
             BuildManager.Instance.DeselectPrefab();

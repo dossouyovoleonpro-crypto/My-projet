@@ -1,5 +1,8 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using System.Collections.Generic;
+
 
 
 public class BuildManager : MonoBehaviour
@@ -33,43 +36,51 @@ public class BuildManager : MonoBehaviour
     }
 
     void Update()
-{
-    // ✅ Déplacement du ghost avec la logique de décalage
-    HandleGhostMovement();
-
-    // ✅ Clic gauche pour placer l'objet
-    if (isPlacingPrefab && !deleteMode && Input.GetMouseButtonDown(0))
     {
-        Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-        PlacePrefab(mousePosition);
-    }
+        // ✅ Déplacement du ghost avec la logique de décalage
+        HandleGhostMovement();
 
-    // ✅ Clic gauche pour supprimer un objet en mode suppression
-    if (deleteMode && Input.GetMouseButtonDown(0))
-    {
-        Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-        RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero, Mathf.Infinity, buildingLayer);
-
-        if (hit.collider != null)
+        // ✅ Clic gauche pour placer l'objet
+        if (isPlacingPrefab && !deleteMode && Input.GetMouseButtonDown(0))
         {
-            GameObject target = hit.collider.gameObject;
+            // ✅ Bloquer le placement si clic sur l'UI
+            if (IsClickOnUIButton())
+                {
+                    Debug.Log("🛑 Clic sur un bouton UI détecté, pas de placement.");
+                    return;
+                }
 
-            if (target.CompareTag("Building"))
+                Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+                PlacePrefab(mousePosition);
+        }
+
+        // ✅ Clic gauche pour supprimer un objet en mode suppression
+        if (deleteMode && Input.GetMouseButtonDown(0))
+        {
+            Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero, Mathf.Infinity, buildingLayer);
+
+            if (hit.collider != null)
             {
-                Debug.Log($"🗑️ Suppression de l'objet : {target.name}");
-                Destroy(target);
+                GameObject target = hit.collider.gameObject;
+
+                if (target.CompareTag("Building") || target.CompareTag("Feu") || target.CompareTag("Mairie"))
+                {
+                    Debug.Log($"🗑️ Suppression de l'objet : {target.name}");
+                    Destroy(target);
+                }
+                else
+                {
+                    Debug.Log("❌ L'objet cliqué n'est pas un bâtiment valide pour la suppression.");
+                }
             }
             else
             {
-                Debug.Log("❌ L'objet cliqué n'est pas un bâtiment valide pour la suppression.");
+                Debug.Log("❌ Aucun objet détecté sous le clic pour la suppression.");
             }
         }
-        else
-        {
-            Debug.Log("❌ Aucun objet détecté sous le clic pour la suppression.");
-        }
     }
-}
+
 
 
     public void SelectPrefab(GameObject prefab)
@@ -212,24 +223,42 @@ public class BuildManager : MonoBehaviour
         }
     }
     
+    private bool IsClickOnUIButton()
+    {
+        if (EventSystem.current.IsPointerOverGameObject())
+        {
+            PointerEventData pointer = new PointerEventData(EventSystem.current) { position = Input.mousePosition };
+            List<RaycastResult> results = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(pointer, results);
+
+            foreach (var result in results)
+            {
+                if (result.gameObject.GetComponent<UnityEngine.UI.Button>() != null)
+                    return true; // Clic sur un vrai bouton interactif
+            }
+        }
+        return false;
+    }
+
+    
 
 
     private void HandleGhostMovement()
-{
-    if (isPlacingPrefab && !deleteMode && ghostInstance != null)
     {
-        Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-        Vector3 ghostPos = new Vector3(Mathf.Round(mousePosition.x), Mathf.Round(mousePosition.y), 0f);
-
-        // Vérifie si le prefab a un PlacementOffset pour ajuster la position du Ghost
-        PlacementOffset offset = selectedPrefab.GetComponent<PlacementOffset>();
-        if (offset != null)
+        if (isPlacingPrefab && !deleteMode && ghostInstance != null)
         {
-            ghostPos = offset.GetOffsetPosition(ghostPos);
-        }
+            Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 ghostPos = new Vector3(Mathf.Round(mousePosition.x), Mathf.Round(mousePosition.y), 0f);
 
-        ghostInstance.transform.position = ghostPos;
+            // Vérifie si le prefab a un PlacementOffset pour ajuster la position du Ghost
+            PlacementOffset offset = selectedPrefab.GetComponent<PlacementOffset>();
+            if (offset != null)
+            {
+                ghostPos = offset.GetOffsetPosition(ghostPos);
+            }
+
+            ghostInstance.transform.position = ghostPos;
+        }
     }
-}
 
 }

@@ -12,19 +12,21 @@ public class BuildButton : MonoBehaviour
 
     void OnClick()
     {
+        // Toujours désactiver le mode suppression quand on clique sur un bouton de construction
         if (BuildManager.Instance.IsDeleteMode())
         {
-            Debug.Log("Mode suppression activé.");
-            return;
+            BuildManager.Instance.SetDeleteMode(false);
+            Debug.Log("Mode suppression désactivé via bouton de construction.");
         }
 
         BuildingCost cost = prefabToPlace.GetComponent<BuildingCost>();
         if (cost != null && !ResourceManager.Instance.HasEnoughResources(cost))
         {
-            Debug.Log("Pas assez de ressources !");
+            Debug.Log("Pas assez de ressources pour construire !");
             return;
         }
 
+        // Activer ou désactiver le mode placement
         if (BuildManager.Instance.GetSelectedPrefab() == prefabToPlace)
         {
             BuildManager.Instance.DeselectPrefab();

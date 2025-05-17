@@ -1,8 +1,11 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
+
 
 public class BuildManager : MonoBehaviour
 {
     public static BuildManager Instance;
+    public LayerMask buildingLayer;
 
     private GameObject selectedPrefab;
     private bool deleteMode = false;
@@ -30,22 +33,44 @@ public class BuildManager : MonoBehaviour
     }
 
     void Update()
-    {
-        // Déplacement du ghost avec la souris
-        if (isPlacingPrefab && !deleteMode && ghostInstance != null)
-        {
-            Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-            Vector3 ghostPos = new Vector3(Mathf.Round(mousePosition.x), Mathf.Round(mousePosition.y), 0f);
-            ghostInstance.transform.position = ghostPos;
-        }
+{
+    // ✅ Déplacement du ghost avec la logique de décalage
+    HandleGhostMovement();
 
-        // Clic gauche pour placer l'objet
-        if (isPlacingPrefab && !deleteMode && Input.GetMouseButtonDown(0))
+    // ✅ Clic gauche pour placer l'objet
+    if (isPlacingPrefab && !deleteMode && Input.GetMouseButtonDown(0))
+    {
+        Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        PlacePrefab(mousePosition);
+    }
+
+    // ✅ Clic gauche pour supprimer un objet en mode suppression
+    if (deleteMode && Input.GetMouseButtonDown(0))
+    {
+        Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero, Mathf.Infinity, buildingLayer);
+
+        if (hit.collider != null)
         {
-            Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-            PlacePrefab(mousePosition);
+            GameObject target = hit.collider.gameObject;
+
+            if (target.CompareTag("Building"))
+            {
+                Debug.Log($"🗑️ Suppression de l'objet : {target.name}");
+                Destroy(target);
+            }
+            else
+            {
+                Debug.Log("❌ L'objet cliqué n'est pas un bâtiment valide pour la suppression.");
+            }
+        }
+        else
+        {
+            Debug.Log("❌ Aucun objet détecté sous le clic pour la suppression.");
         }
     }
+}
+
 
     public void SelectPrefab(GameObject prefab)
     {
@@ -91,32 +116,50 @@ public class BuildManager : MonoBehaviour
     }
 
     public void PlacePrefab(Vector2 position)
+{
+    if (selectedPrefab != null)
     {
-        if (selectedPrefab != null)
+        BuildingCost cost = selectedPrefab.GetComponent<BuildingCost>();
+
+        if (cost != null && ResourceManager.Instance.HasEnoughResources(cost))
         {
-            BuildingCost cost = selectedPrefab.GetComponent<BuildingCost>();
+            Vector3 placePos = new Vector3(Mathf.Round(position.x), Mathf.Round(position.y), 0f);
 
-            if (cost != null && ResourceManager.Instance.HasEnoughResources(cost))
+            // ✅ Vérifie si le prefab a un PlacementOffset pour ajuster la position de placement
+            PlacementOffset offset = selectedPrefab.GetComponent<PlacementOffset>();
+            if (offset != null)
             {
-                Vector3 placePosition = new Vector3(Mathf.Round(position.x), Mathf.Round(position.y), 0f);
-
-                // ✅ Instanciation et configuration pour la sauvegarde
-                GameObject newObj = Instantiate(selectedPrefab, placePosition, Quaternion.identity);
-                newObj.tag = "Building"; // Important pour la sauvegarde
-
-                BuildingIdentifier identifier = newObj.AddComponent<BuildingIdentifier>();
-                identifier.prefabName = selectedPrefab.name;
-
-                Debug.Log($"🏗️ Bâtiment placé : {selectedPrefab.name} à {placePosition}");
-
-                ResourceManager.Instance.SpendResources(cost);
+                placePos = offset.GetOffsetPosition(placePos);
             }
-            else
+
+            GameObject newObj = Instantiate(selectedPrefab, placePos, Quaternion.identity);
+            newObj.tag = "Building";
+            newObj.layer = LayerMask.NameToLayer("Building");
+
+            // ✅ Ajout automatique d'un Collider2D si aucun n'existe
+            if (newObj.GetComponent<Collider2D>() == null)
             {
-                Debug.Log("❌ Pas assez de ressources pour construire !");
+                newObj.AddComponent<BoxCollider2D>();
+                Debug.Log($"🧩 BoxCollider2D ajouté automatiquement à {newObj.name}");
             }
+
+            // ✅ Assignation pour la sauvegarde et la suppression
+            BuildingIdentifier identifier = newObj.AddComponent<BuildingIdentifier>();
+            identifier.prefabName = selectedPrefab.name;
+
+            Debug.Log($"🏗️ Bâtiment placé : {selectedPrefab.name} à {placePos}");
+
+            ResourceManager.Instance.SpendResources(cost);
+        }
+        else
+        {
+            Debug.Log("❌ Pas assez de ressources pour construire !");
         }
     }
+}
+
+
+
 
     private void ApplyGhostVisual(GameObject ghost)
     {
@@ -139,4 +182,25 @@ public class BuildManager : MonoBehaviour
             script.enabled = false;
         }
     }
+    
+
+
+    private void HandleGhostMovement()
+{
+    if (isPlacingPrefab && !deleteMode && ghostInstance != null)
+    {
+        Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        Vector3 ghostPos = new Vector3(Mathf.Round(mousePosition.x), Mathf.Round(mousePosition.y), 0f);
+
+        // Vérifie si le prefab a un PlacementOffset pour ajuster la position du Ghost
+        PlacementOffset offset = selectedPrefab.GetComponent<PlacementOffset>();
+        if (offset != null)
+        {
+            ghostPos = offset.GetOffsetPosition(ghostPos);
+        }
+
+        ghostInstance.transform.position = ghostPos;
+    }
+}
+
 }

@@ -14,10 +14,22 @@ public class PNJMovement : MonoBehaviour
     public Tilemap obstacleMap;
     public Animator animator;
 
+    // ✅ Sprites pour la direction
+    public Sprite spriteGauche;
+    public Sprite spriteDroite;
+
+    private SpriteRenderer spriteRenderer;
+
     void Start()
     {
         moveTimer = moveInterval;
         targetPosition = transform.position;
+
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer == null)
+        {
+            Debug.LogError("❌ [PNJMovement] Aucun SpriteRenderer trouvé sur " + gameObject.name);
+        }
     }
 
     void Update()
@@ -70,26 +82,34 @@ public class PNJMovement : MonoBehaviour
 
     void UpdateAnimation(Vector2 dir)
     {
-        if (animator == null)
+        if (animator != null)
         {
-            Debug.LogWarning("❌ Animator non assigné sur " + gameObject.name);
-            return;
+            if (HasParameter(animator, "IsWalking"))
+                animator.SetBool("IsWalking", dir != Vector2.zero);
+
+            if (HasParameter(animator, "Direction"))
+            {
+                if (dir == Vector2.up) animator.SetInteger("Direction", 1);
+                else if (dir == Vector2.down) animator.SetInteger("Direction", 0);
+                else if (dir == Vector2.left) animator.SetInteger("Direction", 2);
+                else if (dir == Vector2.right) animator.SetInteger("Direction", 3);
+            }
         }
 
-        // Vérifie si le paramètre "IsWalking" existe
-        if (HasParameter(animator, "IsWalking"))
-            animator.SetBool("IsWalking", dir != Vector2.zero);
-
-        if (HasParameter(animator, "Direction"))
+        // ✅ Gestion des sprites pour la direction gauche/droite
+        if (spriteRenderer != null)
         {
-            if (dir == Vector2.up) animator.SetInteger("Direction", 1);
-            else if (dir == Vector2.down) animator.SetInteger("Direction", 0);
-            else if (dir == Vector2.left) animator.SetInteger("Direction", 2);
-            else if (dir == Vector2.right) animator.SetInteger("Direction", 3);
+            if (dir == Vector2.left && spriteGauche != null)
+            {
+                spriteRenderer.sprite = spriteGauche;
+            }
+            else if (dir == Vector2.right && spriteDroite != null)
+            {
+                spriteRenderer.sprite = spriteDroite;
+            }
         }
     }
 
-    // Vérifie si le paramètre existe dans l'Animator
     bool HasParameter(Animator anim, string paramName)
     {
         foreach (AnimatorControllerParameter param in anim.parameters)

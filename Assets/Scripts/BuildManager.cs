@@ -213,28 +213,29 @@ public class BuildManager : MonoBehaviour
     }
 
 
-public void SpawnPNJsAround(Vector3 center, int count, Transform parent = null)
-{
-    if (pnjPrefab == null)
+    public void SpawnPNJsAround(Vector3 center, int count, Transform parent = null)
     {
-        Debug.LogWarning("❌ Aucun prefab PNJ assigné dans BuildManager !");
-        return;
+        if (pnjPrefab == null)
+        {
+            Debug.LogWarning("❌ Aucun prefab de PNJ assigné dans BuildManager !");
+            return;
+        }
+
+        Vector2[] directions = { Vector2.up * 3f, Vector2.down * 3f, Vector2.left * 3f, Vector2.right * 3f };
+        int spawned = 0;
+
+        for (int i = 0; i < directions.Length && spawned < count; i++)
+        {
+            Vector3 spawnPos = center + (Vector3)directions[i];
+            GameObject pnj = Instantiate(pnjPrefab, spawnPos, Quaternion.identity);
+
+            if (parent != null)
+                pnj.transform.SetParent(parent); // ✅ Les PNJ sont bien liés à la maison
+
+            spawned++;
+        }
     }
 
-    Vector2[] directions = { Vector2.up * 3f, Vector2.down * 3f, Vector2.left * 3f, Vector2.right * 3f };
-    int spawned = 0;
-
-    for (int i = 0; i < directions.Length && spawned < count; i++)
-    {
-        Vector3 spawnPos = center + (Vector3)directions[i];
-        GameObject pnj = Instantiate(pnjPrefab, spawnPos, Quaternion.identity);
-
-        if (parent != null)
-            pnj.transform.SetParent(parent); // ✅ Lier le PNJ à la maison pour suppression propre
-
-        spawned++;
-    }
-}
 
 
 

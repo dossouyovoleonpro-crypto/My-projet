@@ -123,7 +123,7 @@ public class SaveManager : MonoBehaviour
                 if (bData.prefabName.Contains("maison"))
                 {
                     ResourceManager.Instance.AddPopulation(3);
-                    BuildManager.Instance.SpawnPNJsAround(bData.position, 3); // ✅ C'est ici !
+                    BuildManager.Instance.SpawnPNJsAround(bData.position, 3, newObj.transform); // ✅ Les PNJ deviennent enfants de la maison
                 }
 
 

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using System.Collections;
+using System.Collections.Generic;
 
 public class PNJWorker : MonoBehaviour
 {
@@ -12,6 +13,10 @@ public class PNJWorker : MonoBehaviour
     private Vector3 targetPosition;
     private ResourceManager resourceManager;
     private DayNightCycle dayNightController;
+
+    // ✅ Système de ressources occupées
+    private static HashSet<GameObject> occupiedResources = new HashSet<GameObject>();
+    private static HashSet<Vector3Int> occupiedTiles = new HashSet<Vector3Int>();
 
     void Start()
     {
@@ -32,17 +37,20 @@ public class PNJWorker : MonoBehaviour
         {
             if (!isWorking && dayNightController != null && dayNightController.IsDayTime())
             {
-                // Recherche des ressources : d’abord GameObjects puis Tiles
                 GameObject targetGO = FindNearestWorkTarget();
                 Vector3Int? targetTile = FindNearestTileTarget();
 
                 if (targetGO != null)
                 {
+                    occupiedResources.Add(targetGO);
                     yield return HandleGameObjectResource(targetGO);
+                    occupiedResources.Remove(targetGO);
                 }
                 else if (targetTile.HasValue)
                 {
+                    occupiedTiles.Add(targetTile.Value);
                     yield return HandleTileResource(targetTile.Value);
+                    occupiedTiles.Remove(targetTile.Value);
                 }
                 else
                 {
@@ -102,7 +110,7 @@ public class PNJWorker : MonoBehaviour
         if (tile != null)
         {
             ProcessTile(tile);
-            obstacleMap.SetTile(cellPos, null); // Supprime la tile
+            obstacleMap.SetTile(cellPos, null);
             Debug.Log($"✅ [{gameObject.name}] Travail terminé sur la Tile.");
         }
 
@@ -134,17 +142,17 @@ public class PNJWorker : MonoBehaviour
     {
         string tileName = tile.name.ToLower();
 
-        if (tileName.Contains("0111")) // Arbre
+        if (tileName.Contains("0111")) 
         {
             resourceManager.AddWood(20);
             Debug.Log($"🌲 [{gameObject.name}] Arbre Tile récolté. +20 Bois.");
         }
-        else if (tileName.Contains("berry")) // Baie
+        else if (tileName.Contains("berry")) 
         {
             resourceManager.AddFood(20);
             Debug.Log($"🍓 [{gameObject.name}] Baie Tile récoltée. +20 Nourriture.");
         }
-        else if (tileName.Contains("mountain_landscape")) // Pierre
+        else if (tileName.Contains("mountain_landscape")) 
         {
             resourceManager.AddStone(20);
             Debug.Log($"🪨 [{gameObject.name}] Pierre Tile extraite. +20 Pierre.");
@@ -160,6 +168,7 @@ public class PNJWorker : MonoBehaviour
         foreach (var obj in allObjects)
         {
             if (obj.CompareTag("Ghost")) continue;
+            if (occupiedResources.Contains(obj)) continue;
 
             string name = obj.name.ToLower();
             if (name.Contains("arbre") || name.Contains("baie") || name.Contains("caillou"))
@@ -184,6 +193,8 @@ public class PNJWorker : MonoBehaviour
 
         foreach (var pos in obstacleMap.cellBounds.allPositionsWithin)
         {
+            if (occupiedTiles.Contains(pos)) continue;
+
             TileBase tile = obstacleMap.GetTile(pos);
             if (tile != null)
             {

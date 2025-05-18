@@ -99,10 +99,13 @@ public class BuildManager : MonoBehaviour
         if (ghostInstance != null)
             Destroy(ghostInstance);
 
-        // Création du ghost
+        // ✅ Création du ghost
         ghostInstance = Instantiate(selectedPrefab);
+        ghostInstance.tag = "Ghost";  // ✅ On lui assigne le tag "Ghost"
+
         ApplyGhostVisual(ghostInstance);
     }
+
 
     public void DeselectPrefab()
     {

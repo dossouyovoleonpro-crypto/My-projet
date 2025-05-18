@@ -58,4 +58,10 @@ public class DayNightCycle : MonoBehaviour
         }
         Debug.Log("☀️ Jour !");
     }
+
+    public bool IsDayTime()
+    {
+        return isDay;
+    }
+
 }

@@ -37,50 +37,57 @@ public class BuildManager : MonoBehaviour
     }
 
     void Update()
+{
+    // ✅ Déplacement du ghost avec la logique de décalage
+    HandleGhostMovement();
+
+    // ✅ Clic gauche pour placer l'objet
+    if (isPlacingPrefab && !deleteMode && Input.GetMouseButtonDown(0))
     {
-        // ✅ Déplacement du ghost avec la logique de décalage
-        HandleGhostMovement();
-
-        // ✅ Clic gauche pour placer l'objet
-        if (isPlacingPrefab && !deleteMode && Input.GetMouseButtonDown(0))
+        if (IsClickOnUIButton())
         {
-            // ✅ Bloquer le placement si clic sur l'UI
-            if (IsClickOnUIButton())
-                {
-                    Debug.Log("🛑 Clic sur un bouton UI détecté, pas de placement.");
-                    return;
-                }
-
-                Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-                PlacePrefab(mousePosition);
+            Debug.Log("🛑 Clic sur un bouton UI détecté, pas de placement.");
+            return;
         }
 
-        // ✅ Clic gauche pour supprimer un objet en mode suppression
-        if (deleteMode && Input.GetMouseButtonDown(0))
+        Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        PlacePrefab(mousePosition);
+    }
+
+    // ✅ Clic gauche pour supprimer un objet en mode suppression
+    if (deleteMode && Input.GetMouseButtonDown(0))
+    {
+        Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero, Mathf.Infinity, buildingLayer);
+
+        if (hit.collider != null)
         {
-            Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-            RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero, Mathf.Infinity, buildingLayer);
+            GameObject target = hit.collider.gameObject;
 
-            if (hit.collider != null)
+            if (target.CompareTag("Building") || target.CompareTag("Feu") || target.CompareTag("Mairie"))
             {
-                GameObject target = hit.collider.gameObject;
+                Debug.Log($"🗑️ Suppression de l'objet : {target.name}");
 
-                if (target.CompareTag("Building") || target.CompareTag("Feu") || target.CompareTag("Mairie"))
+                // ✅ Décrémenter la population si c'est une maison
+                if (target.name.ToLower().Contains("maison"))
                 {
-                    Debug.Log($"🗑️ Suppression de l'objet : {target.name}");
-                    Destroy(target);
+                    ResourceManager.Instance.RemovePopulation(3);
                 }
-                else
-                {
-                    Debug.Log("❌ L'objet cliqué n'est pas un bâtiment valide pour la suppression.");
-                }
+
+                Destroy(target); // ✅ Supprime l'objet et ses enfants (PNJ liés)
             }
             else
             {
-                Debug.Log("❌ Aucun objet détecté sous le clic pour la suppression.");
+                Debug.Log("❌ L'objet cliqué n'est pas un bâtiment valide pour la suppression.");
             }
         }
+        else
+        {
+            Debug.Log("❌ Aucun objet détecté sous le clic pour la suppression.");
+        }
     }
+}
+
 
 
 

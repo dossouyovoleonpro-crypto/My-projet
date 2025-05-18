@@ -121,11 +121,11 @@ public class SaveManager : MonoBehaviour
 
                 // ✅ Juste ici : On recrée les PNJ pour les maisons
                 if (bData.prefabName.Contains("maison"))
-                    {
-                        ResourceManager.Instance.AddPopulation(3);
-                        // ✅ Appel de la même méthode que lors du placement manuel avec une distance correcte et association parent
-                        BuildManager.Instance.SpawnPNJsAround(newObj.transform.position, 3, newObj.transform);
-                    }
+                {
+                    ResourceManager.Instance.AddPopulation(3);
+                    BuildManager.Instance.SpawnPNJsAround(bData.position, 3); // ✅ C'est ici !
+                }
+
 
             }
             else

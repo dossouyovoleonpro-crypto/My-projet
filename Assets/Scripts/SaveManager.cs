@@ -120,7 +120,7 @@ public class SaveManager : MonoBehaviour
                 identifier.prefabName = bData.prefabName;
 
                 // ✅ Juste ici : On recrée les PNJ pour les maisons
-                if (bData.prefabName.Contains("Maison"))
+                if (bData.prefabName.Contains("maison"))
                     {
                         ResourceManager.Instance.AddPopulation(3);
                         // ✅ Appel de la même méthode que lors du placement manuel avec une distance correcte et association parent

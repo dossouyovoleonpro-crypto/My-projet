@@ -44,7 +44,7 @@ public class GridPlacer2D : MonoBehaviour
                     GameObject hitObject = hit.collider.gameObject;
 
                     // Vérifie si c'est une maison avant de la supprimer
-                    if (hitObject.name.Contains("Maison"))
+                    if (hitObject.name.Contains("maison"))
                     {
                         ResourceManager.Instance.RemovePopulation(3);
                     }

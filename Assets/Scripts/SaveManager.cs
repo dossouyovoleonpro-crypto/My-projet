@@ -69,68 +69,74 @@ public class SaveManager : MonoBehaviour
 
 
     public void LoadGame()
-{
-    if (!File.Exists(savePath))
     {
-        Debug.LogWarning("⚠️ [SaveManager] Aucune sauvegarde trouvée !");
-        return;
-    }
-
-    string json = File.ReadAllText(savePath);
-    SaveData data = JsonUtility.FromJson<SaveData>(json);
-
-    // Supprimer les bâtiments existants
-    string[] tagsToClear = { "Building", "Feu", "Mairie" };
-    foreach (string tag in tagsToClear)
-    {
-        foreach (var building in GameObject.FindGameObjectsWithTag(tag))
+        if (!File.Exists(savePath))
         {
-            Destroy(building);
+            Debug.LogWarning("⚠️ [SaveManager] Aucune sauvegarde trouvée !");
+            return;
         }
-    }
 
-    // Recréer les bâtiments sauvegardés
-    foreach (var bData in data.buildings)
-    {
-        GameObject prefab = Resources.Load<GameObject>("Prefabs/" + bData.prefabName);
+        string json = File.ReadAllText(savePath);
+        SaveData data = JsonUtility.FromJson<SaveData>(json);
 
-        if (prefab != null)
+        // Supprimer les bâtiments existants
+        string[] tagsToClear = { "Building", "Feu", "Mairie" };
+        foreach (string tag in tagsToClear)
         {
-            GameObject newObj = Instantiate(prefab, bData.position, Quaternion.identity);
-
-            // ✅ Restaurer le tag sauvegardé
-            newObj.tag = bData.tagName;
-            newObj.layer = LayerMask.NameToLayer("Building");
-
-            // ✅ Ajout du Collider si absent
-            BoxCollider2D collider = newObj.GetComponent<BoxCollider2D>();
-            if (collider == null)
+            foreach (var building in GameObject.FindGameObjectsWithTag(tag))
             {
-                collider = newObj.AddComponent<BoxCollider2D>();
-                Debug.Log($"🧩 Collider ajouté à {newObj.name}");
+                Destroy(building);
             }
-
-            // ✅ Application des ColliderSettings s'ils existent
-            ColliderSettings settings = newObj.GetComponent<ColliderSettings>();
-            if (settings != null)
-            {
-                collider.size = settings.customSize;
-                collider.offset = settings.customOffset;
-                Debug.Log($"📏 Collider ajusté via ColliderSettings pour {newObj.name}");
-            }
-
-            // ✅ Réassigner l’identifiant pour la sauvegarde
-            BuildingIdentifier identifier = newObj.AddComponent<BuildingIdentifier>();
-            identifier.prefabName = bData.prefabName;
         }
-        else
+
+        // Recréer les bâtiments sauvegardés
+        foreach (var bData in data.buildings)
         {
-            Debug.LogWarning($"❌ [SaveManager] Prefab non trouvé : {bData.prefabName}. Vérifie qu'il est bien dans 'Resources/Prefabs/'.");
+            GameObject prefab = Resources.Load<GameObject>("Prefabs/" + bData.prefabName);
+
+            if (prefab != null)
+            {
+                GameObject newObj = Instantiate(prefab, bData.position, Quaternion.identity);
+
+                newObj.tag = bData.tagName;
+                newObj.layer = LayerMask.NameToLayer("Building");
+
+                if (newObj.GetComponent<Collider2D>() == null)
+                {
+                    newObj.AddComponent<BoxCollider2D>();
+                    Debug.Log($"🧩 Collider ajouté à {newObj.name}");
+                }
+
+                ColliderSettings settings = newObj.GetComponent<ColliderSettings>();
+                if (settings != null)
+                {
+                    var collider = newObj.GetComponent<BoxCollider2D>();
+                    collider.size = settings.customSize;
+                    collider.offset = settings.customOffset;
+                    Debug.Log($"📏 Collider ajusté via ColliderSettings pour {newObj.name}");
+                }
+
+                BuildingIdentifier identifier = newObj.AddComponent<BuildingIdentifier>();
+                identifier.prefabName = bData.prefabName;
+
+                // ✅ Juste ici : On recrée les PNJ pour les maisons
+                if (bData.prefabName.Contains("Maison"))
+                    {
+                        ResourceManager.Instance.AddPopulation(3);
+                        // ✅ Appel de la même méthode que lors du placement manuel avec une distance correcte et association parent
+                        BuildManager.Instance.SpawnPNJsAround(newObj.transform.position, 3, newObj.transform);
+                    }
+
+            }
+            else
+            {
+                Debug.LogWarning($"❌ [SaveManager] Prefab non trouvé : {bData.prefabName}. Vérifie qu'il est bien dans 'Resources/Prefabs/'.");
+            }
         }
+
+        Debug.Log("📥 [SaveManager] Chargement terminé !");
     }
 
-    Debug.Log("📥 [SaveManager] Chargement terminé !");
-}
 
 
 

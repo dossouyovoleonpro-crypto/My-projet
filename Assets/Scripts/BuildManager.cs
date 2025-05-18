@@ -8,6 +8,7 @@ using System.Collections.Generic;
 public class BuildManager : MonoBehaviour
 {
     public static BuildManager Instance;
+    public GameObject pnjPrefab;
     public LayerMask buildingLayer;
 
     private GameObject selectedPrefab;
@@ -127,75 +128,111 @@ public class BuildManager : MonoBehaviour
     }
 
     public void PlacePrefab(Vector2 position)
-{
-    if (selectedPrefab != null)
     {
-        // ✅ Vérification pour n'autoriser qu'un seul Feu
-        if (selectedPrefab.name.Contains("Feu") && GameObject.FindGameObjectWithTag("Feu") != null)
+        if (selectedPrefab != null)
         {
-            Debug.Log("❌ Un seul Feu est autorisé !");
-            return;
-        }
-
-        // ✅ Vérification pour n'autoriser qu'une seule Mairie
-        if (selectedPrefab.name.Contains("Mairie") && GameObject.FindGameObjectWithTag("Mairie") != null)
-        {
-            Debug.Log("❌ Une seule Mairie est autorisée !");
-            return;
-        }
-
-        BuildingCost cost = selectedPrefab.GetComponent<BuildingCost>();
-
-        if (cost != null && ResourceManager.Instance.HasEnoughResources(cost))
-        {
-            Vector3 placePos = new Vector3(Mathf.Round(position.x), Mathf.Round(position.y), 0f);
-
-            // ✅ Vérifie si le prefab a un PlacementOffset pour ajuster la position de placement
-            PlacementOffset offset = selectedPrefab.GetComponent<PlacementOffset>();
-            if (offset != null)
+            // ✅ Vérification pour n'autoriser qu'un seul Feu
+            if (selectedPrefab.name.Contains("Feu") && GameObject.FindGameObjectWithTag("Feu") != null)
             {
-                placePos = offset.GetOffsetPosition(placePos);
+                Debug.Log("❌ Un seul Feu est autorisé !");
+                return;
             }
 
-            GameObject newObj = Instantiate(selectedPrefab, placePos, Quaternion.identity);
-
-            // ✅ Assigner le bon tag
-            if (selectedPrefab.name.Contains("Feu"))
+            // ✅ Vérification pour n'autoriser qu'une seule Mairie
+            if (selectedPrefab.name.Contains("Mairie") && GameObject.FindGameObjectWithTag("Mairie") != null)
             {
-                newObj.tag = "Feu";
+                Debug.Log("❌ Une seule Mairie est autorisée !");
+                return;
             }
-            else if (selectedPrefab.name.Contains("Mairie"))
+
+            BuildingCost cost = selectedPrefab.GetComponent<BuildingCost>();
+
+            if (cost != null && ResourceManager.Instance.HasEnoughResources(cost))
             {
-                newObj.tag = "Mairie";
+                Vector3 placePos = new Vector3(Mathf.Round(position.x), Mathf.Round(position.y), 0f);
+
+                // ✅ Vérifie si le prefab a un PlacementOffset pour ajuster la position de placement
+                PlacementOffset offset = selectedPrefab.GetComponent<PlacementOffset>();
+                if (offset != null)
+                {
+                    placePos = offset.GetOffsetPosition(placePos);
+                }
+
+                GameObject newObj = Instantiate(selectedPrefab, placePos, Quaternion.identity);
+
+                // ✅ Assigner le bon tag
+                if (selectedPrefab.name.Contains("Feu"))
+                {
+                    newObj.tag = "Feu";
+                }
+                else if (selectedPrefab.name.Contains("Mairie"))
+                {
+                    newObj.tag = "Mairie";
+                }
+                else
+                {
+                    newObj.tag = "Building";
+                }
+
+                newObj.layer = LayerMask.NameToLayer("Building");
+
+                // ✅ Ajout automatique d'un Collider2D si aucun n'existe
+                if (newObj.GetComponent<Collider2D>() == null)
+                {
+                    newObj.AddComponent<BoxCollider2D>();
+                    Debug.Log($"🧩 BoxCollider2D ajouté automatiquement à {newObj.name}");
+                }
+
+                // ✅ Assignation pour la sauvegarde et la suppression
+                BuildingIdentifier identifier = newObj.AddComponent<BuildingIdentifier>();
+                identifier.prefabName = selectedPrefab.name;
+
+                Debug.Log($"🏗️ Bâtiment placé : {selectedPrefab.name} à {placePos}");
+
+                ResourceManager.Instance.SpendResources(cost);
+
+                // ✅ Si c'est une maison, ajoute 3 PNJ autour et +3 population
+                if (selectedPrefab.name.ToLower().Contains("maison"))
+                {
+                    ResourceManager.Instance.AddPopulation(3);
+                    SpawnPNJsAround(placePos, 3, newObj.transform);
+                }
             }
             else
             {
-                newObj.tag = "Building";
+                Debug.Log("❌ Pas assez de ressources pour construire !");
             }
-
-            newObj.layer = LayerMask.NameToLayer("Building");
-
-            // ✅ Ajout automatique d'un Collider2D si aucun n'existe
-            if (newObj.GetComponent<Collider2D>() == null)
-            {
-                newObj.AddComponent<BoxCollider2D>();
-                Debug.Log($"🧩 BoxCollider2D ajouté automatiquement à {newObj.name}");
-            }
-
-            // ✅ Assignation pour la sauvegarde et la suppression
-            BuildingIdentifier identifier = newObj.AddComponent<BuildingIdentifier>();
-            identifier.prefabName = selectedPrefab.name;
-
-            Debug.Log($"🏗️ Bâtiment placé : {selectedPrefab.name} à {placePos}");
-
-            ResourceManager.Instance.SpendResources(cost);
-        }
-        else
-        {
-            Debug.Log("❌ Pas assez de ressources pour construire !");
         }
     }
+
+
+public void SpawnPNJsAround(Vector3 center, int count, Transform parent = null)
+{
+    if (pnjPrefab == null)
+    {
+        Debug.LogWarning("❌ Aucun prefab PNJ assigné dans BuildManager !");
+        return;
+    }
+
+    Vector2[] directions = { Vector2.up * 3f, Vector2.down * 3f, Vector2.left * 3f, Vector2.right * 3f };
+    int spawned = 0;
+
+    for (int i = 0; i < directions.Length && spawned < count; i++)
+    {
+        Vector3 spawnPos = center + (Vector3)directions[i];
+        GameObject pnj = Instantiate(pnjPrefab, spawnPos, Quaternion.identity);
+
+        if (parent != null)
+            pnj.transform.SetParent(parent); // ✅ Lier le PNJ à la maison pour suppression propre
+
+        spawned++;
+    }
 }
+
+
+
+
+
 
 
 

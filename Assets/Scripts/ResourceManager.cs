@@ -6,20 +6,47 @@ public class ResourceManager : MonoBehaviour
 {
     public static ResourceManager Instance;
 
+    // UI Elements
     public TextMeshProUGUI woodText;
     public TextMeshProUGUI foodText;
     public TextMeshProUGUI stoneText;
     public TextMeshProUGUI ironText;
     public TextMeshProUGUI goldText;
+    public TextMeshProUGUI populationText; // ✅ Nouveau champ pour la population
 
+    // Configuration clignotement
     public Color warningColor = Color.red;
     public float flashDuration = 0.2f;
 
+    // Ressources
     public int wood = 0;
     public int food = 0;
     public int stone = 0;
     public int iron = 0;
     public int gold = 0;
+
+    // ✅ Population
+    public int population = 3; // Valeur de départ
+
+
+    // Getters pour la sauvegarde
+    public int GetWood() => wood;
+    public int GetFood() => food;
+    public int GetStone() => stone;
+    public int GetIron() => iron;
+    public int GetGold() => gold;
+
+    // Setter pour recharger les ressources
+    public void SetResources(int wood, int food, int stone, int iron, int gold)
+    {
+        this.wood = wood;
+        this.food = food;
+        this.stone = stone;
+        this.iron = iron;
+        this.gold = gold;
+        UpdateUI();
+    }
+
 
     void Awake()
     {
@@ -52,8 +79,31 @@ public class ResourceManager : MonoBehaviour
         stoneText.text = stone.ToString();
         ironText.text = iron.ToString();
         goldText.text = gold.ToString();
+
+        if (populationText != null)
+            populationText.text = population.ToString(); // ✅ Mise à jour de l'affichage population
     }
 
+    // ✅ Gestion de la Population
+    public void AddPopulation(int amount) 
+    { 
+        population += amount; 
+        UpdateUI(); 
+    }
+
+    public void RemovePopulation(int amount) 
+    { 
+        population = Mathf.Max(0, population - amount); 
+        UpdateUI(); 
+    }
+
+    public void SetPopulation(int value)
+    {
+        population = Mathf.Max(0, value);
+        UpdateUI();
+    }
+
+    // Gestion des ressources
     public void AddWood(int amount) { wood += amount; UpdateUI(); }
     public void RemoveWood(int amount) { wood -= amount; UpdateUI(); }
     public void AddFood(int amount) { food += amount; UpdateUI(); }
@@ -100,10 +150,8 @@ public class ResourceManager : MonoBehaviour
             yield return new WaitForSeconds(flashDuration);
         }
 
-        // ✅ Force le retour à la couleur noire après le clignotement
         textElement.color = Color.black;
     }
-
 
     public void SpendResources(BuildingCost cost)
     {

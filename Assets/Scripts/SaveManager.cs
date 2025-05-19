@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Tilemaps;
 using System.Collections.Generic;
 using System.IO;
 
@@ -11,14 +12,39 @@ public class BuildingData
 }
 
 [System.Serializable]
+public class TileDeletionData
+{
+    public List<Vector3IntSerializable> deletedTiles = new List<Vector3IntSerializable>();
+}
+
+[System.Serializable]
+public struct Vector3IntSerializable
+{
+    public int x, y, z;
+
+    public Vector3IntSerializable(Vector3Int vec)
+    {
+        x = vec.x;
+        y = vec.y;
+        z = vec.z;
+    }
+
+    public Vector3Int ToVector3Int() => new Vector3Int(x, y, z);
+}
+
+[System.Serializable]
 public class SaveData
 {
     public List<BuildingData> buildings = new List<BuildingData>();
+    public TileDeletionData tileDeletions = new TileDeletionData();
 }
 
 public class SaveManager : MonoBehaviour
 {
     private string savePath;
+    private SaveData currentSaveData = new SaveData();
+
+    public Tilemap obstacleMap; // Assigner dans l'inspecteur à 'TerrainObstacle'
 
     void Awake()
     {
@@ -38,10 +64,8 @@ public class SaveManager : MonoBehaviour
 
     public void SaveGame()
     {
-        SaveData data = new SaveData();
-
-        // ✅ Inclure tous les tags pertinents
         string[] tagsToSave = { "Building", "Feu", "Mairie" };
+        currentSaveData.buildings.Clear();
 
         foreach (string tag in tagsToSave)
         {
@@ -54,19 +78,18 @@ public class SaveManager : MonoBehaviour
                 {
                     prefabName = prefabName,
                     position = building.transform.position,
-                    tagName = tag // ✅ On sauvegarde le tag
+                    tagName = tag
                 };
 
-                data.buildings.Add(bData);
+                currentSaveData.buildings.Add(bData);
             }
         }
 
-        string json = JsonUtility.ToJson(data, true);
+        string json = JsonUtility.ToJson(currentSaveData, true);
         File.WriteAllText(savePath, json);
 
         Debug.Log($"✅ [SaveManager] Sauvegarde effectuée à : {savePath}");
     }
-
 
     public void LoadGame()
     {
@@ -77,9 +100,8 @@ public class SaveManager : MonoBehaviour
         }
 
         string json = File.ReadAllText(savePath);
-        SaveData data = JsonUtility.FromJson<SaveData>(json);
+        currentSaveData = JsonUtility.FromJson<SaveData>(json);
 
-        // Supprimer les bâtiments existants
         string[] tagsToClear = { "Building", "Feu", "Mairie" };
         foreach (string tag in tagsToClear)
         {
@@ -89,70 +111,52 @@ public class SaveManager : MonoBehaviour
             }
         }
 
-        // Recréer les bâtiments sauvegardés
-        foreach (var bData in data.buildings)
+        foreach (var bData in currentSaveData.buildings)
         {
             GameObject prefab = Resources.Load<GameObject>("Prefabs/" + bData.prefabName);
-
             if (prefab != null)
             {
                 GameObject newObj = Instantiate(prefab, bData.position, Quaternion.identity);
-
                 newObj.tag = bData.tagName;
-                newObj.layer = LayerMask.NameToLayer("Building");
 
-                if (newObj.GetComponent<Collider2D>() == null)
-                {
-                    newObj.AddComponent<BoxCollider2D>();
-                    Debug.Log($"🧩 Collider ajouté à {newObj.name}");
-                }
-
-                ColliderSettings settings = newObj.GetComponent<ColliderSettings>();
-                if (settings != null)
-                {
-                    var collider = newObj.GetComponent<BoxCollider2D>();
-                    collider.size = settings.customSize;
-                    collider.offset = settings.customOffset;
-                    Debug.Log($"📏 Collider ajusté via ColliderSettings pour {newObj.name}");
-                }
-
-                BuildingIdentifier identifier = newObj.AddComponent<BuildingIdentifier>();
+                var identifier = newObj.AddComponent<BuildingIdentifier>();
                 identifier.prefabName = bData.prefabName;
-
-                // ✅ Juste ici : On recrée les PNJ pour les maisons
-                if (bData.prefabName.Contains("maison"))
-                {
-                    ResourceManager.Instance.AddPopulation(3);
-                    BuildManager.Instance.SpawnPNJsAround(bData.position, 3, newObj.transform); // ✅ Les PNJ deviennent enfants de la maison
-                }
-
-
             }
-            else
+        }
+
+        foreach (var serializedPos in currentSaveData.tileDeletions.deletedTiles)
+        {
+            Vector3Int pos = serializedPos.ToVector3Int();
+            if (obstacleMap != null)
             {
-                Debug.LogWarning($"❌ [SaveManager] Prefab non trouvé : {bData.prefabName}. Vérifie qu'il est bien dans 'Resources/Prefabs/'.");
+                obstacleMap.SetTile(pos, null);
+                Debug.Log($"🗑️ [SaveManager] Suppression de la Tile Ressource à : {pos}");
             }
         }
 
         Debug.Log("📥 [SaveManager] Chargement terminé !");
     }
 
+    public void RegisterTileDeletion(Vector3Int tilePosition)
+    {
+        var serializablePos = new Vector3IntSerializable(tilePosition);
 
+        if (!currentSaveData.tileDeletions.deletedTiles.Contains(serializablePos))
+        {
+            currentSaveData.tileDeletions.deletedTiles.Add(serializablePos);
+            Debug.Log($"🗑️ [SaveManager] Tile supprimée enregistrée à : {tilePosition}");
+            SaveGame(); // Sauvegarde immédiate après suppression
+        }
+    }
 
+    public bool IsTileDeleted(Vector3Int pos)
+    {
+        return currentSaveData.tileDeletions.deletedTiles.Contains(new Vector3IntSerializable(pos));
+    }
 
     void Update()
     {
-        // Raccourcis pour tests
-        if (Input.GetKeyDown(KeyCode.K)) // K = Save
-        {
-            Debug.Log("💾 [SaveManager] Sauvegarde manuelle via touche K.");
-            SaveGame();
-        }
-
-        if (Input.GetKeyDown(KeyCode.L)) // L = Load
-        {
-            Debug.Log("📂 [SaveManager] Chargement manuel via touche L.");
-            LoadGame();
-        }
+        if (Input.GetKeyDown(KeyCode.K)) SaveGame();
+        if (Input.GetKeyDown(KeyCode.L)) LoadGame();
     }
 }

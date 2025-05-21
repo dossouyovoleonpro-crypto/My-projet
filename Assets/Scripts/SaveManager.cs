@@ -39,6 +39,19 @@ public class SaveData
     public TileDeletionData tileDeletions = new TileDeletionData();
 }
 
+[System.Serializable]
+public class TileData
+{
+    public string tileName;
+    public Vector3Int position;
+}
+
+[System.Serializable]
+public class TilemapSaveData
+{
+    public List<TileData> tiles = new List<TileData>();
+}
+
 public class SaveManager : MonoBehaviour
 {
     private string savePath;
@@ -154,9 +167,75 @@ public class SaveManager : MonoBehaviour
         return currentSaveData.tileDeletions.deletedTiles.Contains(new Vector3IntSerializable(pos));
     }
 
-    void Update()
+    public void LoadTilemap(Tilemap tilemap, string saveName)
     {
-        if (Input.GetKeyDown(KeyCode.K)) SaveGame();
-        if (Input.GetKeyDown(KeyCode.L)) LoadGame();
+        string path = Application.persistentDataPath + "/Saves/" + saveName + ".json";
+        if (!File.Exists(path))
+        {
+            Debug.LogWarning($"⚠️ [SaveManager] Fichier {saveName}.json introuvable.");
+            return;
+        }
+
+        string json = File.ReadAllText(path);
+        TilemapSaveData tileData = JsonUtility.FromJson<TilemapSaveData>(json);
+
+        tilemap.ClearAllTiles();
+
+        foreach (var tileInfo in tileData.tiles)
+        {
+            TileBase tile = Resources.Load<TileBase>($"Tiles/{tileInfo.tileName}");
+            if (tile != null)
+                tilemap.SetTile(tileInfo.position, tile);
+        }
+
+        Debug.Log($"📥 [SaveManager] Map {saveName} chargée.");
     }
+
+    public void ResetToBaseMap()
+{
+    Debug.Log("🧹 [SaveManager] Réinitialisation de la Tilemap avec la BaseMap...");
+
+    // Supprimer tous les bâtiments
+    string[] tagsToClear = { "Building", "Feu", "Mairie" };
+    foreach (string tag in tagsToClear)
+    {
+        foreach (var building in GameObject.FindGameObjectsWithTag(tag))
+        {
+            Destroy(building);
+        }
+    }
+
+    // Recharger la carte de base
+    LoadTilemap(obstacleMap, "BaseMap");
+
+    // Replacer les tiles détruites au bon endroit
+    string basePath = Application.persistentDataPath + "/Saves/BaseMap.json";
+    if (File.Exists(basePath))
+    {
+        string baseJson = File.ReadAllText(basePath);
+        TilemapSaveData baseData = JsonUtility.FromJson<TilemapSaveData>(baseJson);
+
+        foreach (var tileInfo in baseData.tiles)
+        {
+            Vector3Int pos = tileInfo.position;
+            if (!currentSaveData.tileDeletions.deletedTiles.Contains(new Vector3IntSerializable(pos)))
+            {
+                TileBase tile = Resources.Load<TileBase>($"Tiles/{tileInfo.tileName}");
+                if (tile != null)
+                    obstacleMap.SetTile(pos, tile);
+            }
+        }
+
+        Debug.Log("✅ [SaveManager] Ressources naturelles restaurées à leur position d'origine.");
+    }
+    else
+    {
+        Debug.LogWarning("⚠️ [SaveManager] BaseMap.json introuvable, impossible de restaurer les ressources.");
+    }
+
+    // Nettoyer les suppressions
+    currentSaveData.tileDeletions.deletedTiles.Clear();
+    SaveGame();
 }
+
+} 

@@ -63,11 +63,11 @@ public class ResourceManager : MonoBehaviour
 
     void Start()
     {
-        wood = 10000;
-        food = 10000;
-        stone = 10000;
-        iron = 10000;
-        gold = 10000;
+        wood = 0;
+        food = 0;
+        stone = 0;
+        iron = 0;
+        gold = 0;
 
         UpdateUI();
     }

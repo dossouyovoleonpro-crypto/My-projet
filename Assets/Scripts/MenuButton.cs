@@ -55,9 +55,17 @@ public class MenuButton : MonoBehaviour
 
     void ResetGame()
     {
-        Debug.Log("🔄 Réinitialisation de la partie...");
+        Debug.Log("🔄 Réinitialisation de la map à l'état initial...");
+
+        SaveManager saveManager = FindFirstObjectByType<SaveManager>();
+        if (saveManager != null)
+        {
+            saveManager.ResetToBaseMap();
+        }
+
         UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
     }
+
 
     void OpenStats()
     {

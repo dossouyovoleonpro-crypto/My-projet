@@ -3,8 +3,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
-
-
 public class BuildManager : MonoBehaviour
 {
     public static BuildManager Instance;
@@ -16,10 +14,8 @@ public class BuildManager : MonoBehaviour
     private bool isPlacingPrefab = false;
 
     private Camera mainCamera;
-
-    // Gestion du Ghost (Aperçu du bâtiment)
     private GameObject ghostInstance;
-    public Material ghostMaterial; // À assigner dans l'inspecteur
+    public Material ghostMaterial;
 
     void Awake()
     {
@@ -38,10 +34,8 @@ public class BuildManager : MonoBehaviour
 
     void Update()
     {
-        // ✅ Déplacement du ghost avec la logique de décalage
         HandleGhostMovement();
 
-        // ✅ Clic gauche pour placer l'objet
         if (isPlacingPrefab && !deleteMode && Input.GetMouseButtonDown(0))
         {
             if (IsClickOnUIButton())
@@ -54,7 +48,6 @@ public class BuildManager : MonoBehaviour
             PlacePrefab(mousePosition);
         }
 
-        // ✅ Clic gauche pour supprimer un objet en mode suppression
         if (deleteMode && Input.GetMouseButtonDown(0))
         {
             Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
@@ -69,15 +62,12 @@ public class BuildManager : MonoBehaviour
                     Debug.Log($"🗑️ Suppression de l'objet : {target.name}");
 
                     if (target.name.ToLower().Contains("maison"))
-                    {
                         ResourceManager.Instance.RemovePopulation(3);
-                    }
-                    if (target.name.ToLower().Contains("foyer"))
-                    {
-                        ResourceManager.Instance.RemovePopulation(5);
-                    }
 
-                    Destroy(target); // ✅ Supprime l'objet et ses enfants (PNJ liés)
+                    if (target.name.ToLower().Contains("foyer"))
+                        ResourceManager.Instance.RemovePopulation(5);
+
+                    Destroy(target);
                 }
                 else
                 {
@@ -91,9 +81,6 @@ public class BuildManager : MonoBehaviour
         }
     }
 
-
-
-
     public void SelectPrefab(GameObject prefab)
     {
         selectedPrefab = prefab;
@@ -102,13 +89,11 @@ public class BuildManager : MonoBehaviour
         if (ghostInstance != null)
             Destroy(ghostInstance);
 
-        // ✅ Création du ghost
         ghostInstance = Instantiate(selectedPrefab);
-        ghostInstance.tag = "Ghost";  // ✅ On lui assigne le tag "Ghost"
+        ghostInstance.tag = "Ghost";
 
         ApplyGhostVisual(ghostInstance);
     }
-
 
     public void DeselectPrefab()
     {
@@ -144,14 +129,12 @@ public class BuildManager : MonoBehaviour
     {
         if (selectedPrefab != null)
         {
-            // ✅ Vérification pour n'autoriser qu'un seul Feu
             if (selectedPrefab.name.Contains("Feu") && GameObject.FindGameObjectWithTag("Feu") != null)
             {
                 Debug.Log("❌ Un seul Feu est autorisé !");
                 return;
             }
 
-            // ✅ Vérification pour n'autoriser qu'une seule Mairie
             if (selectedPrefab.name.Contains("Mairie") && GameObject.FindGameObjectWithTag("Mairie") != null)
             {
                 Debug.Log("❌ Une seule Mairie est autorisée !");
@@ -159,49 +142,41 @@ public class BuildManager : MonoBehaviour
             }
 
             BuildingCost cost = selectedPrefab.GetComponent<BuildingCost>();
-
             if (cost != null && ResourceManager.Instance.HasEnoughResources(cost))
             {
                 Vector3 placePos = new Vector3(Mathf.Round(position.x), Mathf.Round(position.y), 0f);
-
-                // ✅ Vérifie si le prefab a un PlacementOffset pour ajuster la position de placement
                 PlacementOffset offset = selectedPrefab.GetComponent<PlacementOffset>();
                 if (offset != null)
-                {
                     placePos = offset.GetOffsetPosition(placePos);
+
+                // 🔒 Vérifie que la position est libre (avec marge)
+                if (!PlacementValidator.IsPositionClear(placePos, GridPlacer2D.Instance.terrainMap, GridPlacer2D.Instance.obstacleMap))
+                {
+                    Debug.Log("❌ Emplacement invalide : déjà occupé.");
+                    return;
                 }
 
                 GameObject newObj = Instantiate(selectedPrefab, placePos, Quaternion.identity);
 
-                // ✅ Assigner le bon tag
                 if (selectedPrefab.name.Contains("Feu"))
-                {
                     newObj.tag = "Feu";
-                }
                 else if (selectedPrefab.name.Contains("Mairie"))
-                {
                     newObj.tag = "Mairie";
-                }
                 else
-                {
                     newObj.tag = "Building";
-                }
 
                 newObj.layer = LayerMask.NameToLayer("Building");
 
-                // ✅ Ajout automatique d'un Collider2D si aucun n'existe
                 if (newObj.GetComponent<Collider2D>() == null)
                 {
                     newObj.AddComponent<BoxCollider2D>();
                     Debug.Log($"🧩 BoxCollider2D ajouté automatiquement à {newObj.name}");
                 }
 
-                // ✅ Assignation pour la sauvegarde et la suppression
                 BuildingIdentifier identifier = newObj.AddComponent<BuildingIdentifier>();
                 identifier.prefabName = selectedPrefab.name;
 
                 Debug.Log($"🏗️ Bâtiment placé : {selectedPrefab.name} à {placePos}");
-
                 ResourceManager.Instance.SpendResources(cost);
 
                 if (selectedPrefab.name.ToLower().Contains("maison"))
@@ -222,7 +197,6 @@ public class BuildManager : MonoBehaviour
         }
     }
 
-
     public void SpawnPNJsAround(Vector3 center, int count, Transform parent = null)
     {
         if (pnjPrefab == null)
@@ -232,15 +206,13 @@ public class BuildManager : MonoBehaviour
         }
 
         Vector2[] directions = {
-                Vector2.up * 3f,
-                Vector2.down * 3f,
-                Vector2.left * 3f,
-                Vector2.right * 3f,
-                new Vector2(1f, 1f).normalized * 3f,
-                new Vector2(-1f, 1f).normalized * 3f,
-                new Vector2(1f, -1f).normalized * 3f,
-                new Vector2(-1f, -1f).normalized * 3f
-            };
+            Vector2.up * 3f, Vector2.down * 3f,
+            Vector2.left * 3f, Vector2.right * 3f,
+            new Vector2(1f, 1f).normalized * 3f,
+            new Vector2(-1f, 1f).normalized * 3f,
+            new Vector2(1f, -1f).normalized * 3f,
+            new Vector2(-1f, -1f).normalized * 3f
+        };
 
         int spawned = 0;
 
@@ -250,17 +222,16 @@ public class BuildManager : MonoBehaviour
             GameObject pnj = Instantiate(pnjPrefab, spawnPos, Quaternion.identity);
 
             if (parent != null)
-                pnj.transform.SetParent(parent); // ✅ Attaché à la maison ou foyer
+                pnj.transform.SetParent(parent);
 
             spawned++;
         }
 
         if (spawned < count)
         {
-            Debug.LogWarning($"⚠️ Seuls {spawned}/{count} PNJ ont été placés autour de {center}. Ajoutez plus de directions si nécessaire.");
+            Debug.LogWarning($"⚠️ Seuls {spawned}/{count} PNJ ont été placés autour de {center}.");
         }
     }
-
 
     private void ApplyGhostVisual(GameObject ghost)
     {
@@ -269,9 +240,7 @@ public class BuildManager : MonoBehaviour
         foreach (var renderer in renderers)
         {
             if (ghostMaterial != null)
-            {
                 renderer.material = ghostMaterial;
-            }
 
             Color color = renderer.color;
             color.a = 0.5f;
@@ -279,9 +248,7 @@ public class BuildManager : MonoBehaviour
         }
 
         foreach (var script in ghost.GetComponents<MonoBehaviour>())
-        {
             script.enabled = false;
-        }
     }
 
     private bool IsClickOnUIButton()
@@ -294,15 +261,12 @@ public class BuildManager : MonoBehaviour
 
             foreach (var result in results)
             {
-                if (result.gameObject.GetComponent<UnityEngine.UI.Button>() != null)
-                    return true; // Clic sur un vrai bouton interactif
+                if (result.gameObject.GetComponent<Button>() != null)
+                    return true;
             }
         }
         return false;
     }
-
-
-
 
     private void HandleGhostMovement()
     {
@@ -311,15 +275,11 @@ public class BuildManager : MonoBehaviour
             Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
             Vector3 ghostPos = new Vector3(Mathf.Round(mousePosition.x), Mathf.Round(mousePosition.y), 0f);
 
-            // Vérifie si le prefab a un PlacementOffset pour ajuster la position du Ghost
             PlacementOffset offset = selectedPrefab.GetComponent<PlacementOffset>();
             if (offset != null)
-            {
                 ghostPos = offset.GetOffsetPosition(ghostPos);
-            }
 
             ghostInstance.transform.position = ghostPos;
         }
     }
-
 }

@@ -37,56 +37,59 @@ public class BuildManager : MonoBehaviour
     }
 
     void Update()
-{
-    // ✅ Déplacement du ghost avec la logique de décalage
-    HandleGhostMovement();
-
-    // ✅ Clic gauche pour placer l'objet
-    if (isPlacingPrefab && !deleteMode && Input.GetMouseButtonDown(0))
     {
-        if (IsClickOnUIButton())
+        // ✅ Déplacement du ghost avec la logique de décalage
+        HandleGhostMovement();
+
+        // ✅ Clic gauche pour placer l'objet
+        if (isPlacingPrefab && !deleteMode && Input.GetMouseButtonDown(0))
         {
-            Debug.Log("🛑 Clic sur un bouton UI détecté, pas de placement.");
-            return;
+            if (IsClickOnUIButton())
+            {
+                Debug.Log("🛑 Clic sur un bouton UI détecté, pas de placement.");
+                return;
+            }
+
+            Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            PlacePrefab(mousePosition);
         }
 
-        Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-        PlacePrefab(mousePosition);
-    }
-
-    // ✅ Clic gauche pour supprimer un objet en mode suppression
-    if (deleteMode && Input.GetMouseButtonDown(0))
-    {
-        Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-        RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero, Mathf.Infinity, buildingLayer);
-
-        if (hit.collider != null)
+        // ✅ Clic gauche pour supprimer un objet en mode suppression
+        if (deleteMode && Input.GetMouseButtonDown(0))
         {
-            GameObject target = hit.collider.gameObject;
+            Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero, Mathf.Infinity, buildingLayer);
 
-            if (target.CompareTag("Building") || target.CompareTag("Feu") || target.CompareTag("Mairie"))
+            if (hit.collider != null)
             {
-                Debug.Log($"🗑️ Suppression de l'objet : {target.name}");
+                GameObject target = hit.collider.gameObject;
 
-                // ✅ Décrémenter la population si c'est une maison
-                if (target.name.ToLower().Contains("maison"))
+                if (target.CompareTag("Building") || target.CompareTag("Feu") || target.CompareTag("Mairie"))
                 {
-                    ResourceManager.Instance.RemovePopulation(3);
-                }
+                    Debug.Log($"🗑️ Suppression de l'objet : {target.name}");
 
-                Destroy(target); // ✅ Supprime l'objet et ses enfants (PNJ liés)
+                    if (target.name.ToLower().Contains("maison"))
+                    {
+                        ResourceManager.Instance.RemovePopulation(3);
+                    }
+                    if (target.name.ToLower().Contains("foyer"))
+                    {
+                        ResourceManager.Instance.RemovePopulation(5);
+                    }
+
+                    Destroy(target); // ✅ Supprime l'objet et ses enfants (PNJ liés)
+                }
+                else
+                {
+                    Debug.Log("❌ L'objet cliqué n'est pas un bâtiment valide pour la suppression.");
+                }
             }
             else
             {
-                Debug.Log("❌ L'objet cliqué n'est pas un bâtiment valide pour la suppression.");
+                Debug.Log("❌ Aucun objet détecté sous le clic pour la suppression.");
             }
         }
-        else
-        {
-            Debug.Log("❌ Aucun objet détecté sous le clic pour la suppression.");
-        }
     }
-}
 
 
 
@@ -201,11 +204,15 @@ public class BuildManager : MonoBehaviour
 
                 ResourceManager.Instance.SpendResources(cost);
 
-                // ✅ Si c'est une maison, ajoute 3 PNJ autour et +3 population
                 if (selectedPrefab.name.ToLower().Contains("maison"))
                 {
                     ResourceManager.Instance.AddPopulation(3);
                     SpawnPNJsAround(placePos, 3, newObj.transform);
+                }
+                if (selectedPrefab.name.ToLower().Contains("foyer"))
+                {
+                    ResourceManager.Instance.AddPopulation(5);
+                    SpawnPNJsAround(placePos, 5, newObj.transform);
                 }
             }
             else
@@ -224,7 +231,17 @@ public class BuildManager : MonoBehaviour
             return;
         }
 
-        Vector2[] directions = { Vector2.up * 3f, Vector2.down * 3f, Vector2.left * 3f, Vector2.right * 3f };
+        Vector2[] directions = {
+                Vector2.up * 3f,
+                Vector2.down * 3f,
+                Vector2.left * 3f,
+                Vector2.right * 3f,
+                new Vector2(1f, 1f).normalized * 3f,
+                new Vector2(-1f, 1f).normalized * 3f,
+                new Vector2(1f, -1f).normalized * 3f,
+                new Vector2(-1f, -1f).normalized * 3f
+            };
+
         int spawned = 0;
 
         for (int i = 0; i < directions.Length && spawned < count; i++)
@@ -233,20 +250,16 @@ public class BuildManager : MonoBehaviour
             GameObject pnj = Instantiate(pnjPrefab, spawnPos, Quaternion.identity);
 
             if (parent != null)
-                pnj.transform.SetParent(parent); // ✅ Les PNJ sont bien liés à la maison
+                pnj.transform.SetParent(parent); // ✅ Attaché à la maison ou foyer
 
             spawned++;
         }
+
+        if (spawned < count)
+        {
+            Debug.LogWarning($"⚠️ Seuls {spawned}/{count} PNJ ont été placés autour de {center}. Ajoutez plus de directions si nécessaire.");
+        }
     }
-
-
-
-
-
-
-
-
-
 
 
     private void ApplyGhostVisual(GameObject ghost)
@@ -270,7 +283,7 @@ public class BuildManager : MonoBehaviour
             script.enabled = false;
         }
     }
-    
+
     private bool IsClickOnUIButton()
     {
         if (EventSystem.current.IsPointerOverGameObject())
@@ -288,7 +301,7 @@ public class BuildManager : MonoBehaviour
         return false;
     }
 
-    
+
 
 
     private void HandleGhostMovement()

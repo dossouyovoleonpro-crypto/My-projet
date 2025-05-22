@@ -43,10 +43,13 @@ public class GridPlacer2D : MonoBehaviour
                 {
                     GameObject hitObject = hit.collider.gameObject;
 
-                    // Vérifie si c'est une maison avant de la supprimer
                     if (hitObject.name.Contains("maison"))
                     {
                         ResourceManager.Instance.RemovePopulation(3);
+                    }
+                    if (hitObject.name.Contains("foyer"))
+                    {
+                        ResourceManager.Instance.RemovePopulation(5);
                     }
 
                     // Vérifie et met à jour les bâtiments uniques
@@ -94,11 +97,6 @@ public class GridPlacer2D : MonoBehaviour
                     }
                 }
 
-                // Si c'est une maison, on ajoute 3 à la population
-                if (selectedPrefab.name.ToLower().Contains("maison"))
-                {
-                    ResourceManager.Instance.AddPopulation(3);
-                }
             }
         }
     }

@@ -105,50 +105,79 @@ public class SaveManager : MonoBehaviour
     }
 
     public void LoadGame()
+{
+    if (!File.Exists(savePath))
     {
-        if (!File.Exists(savePath))
+        Debug.LogWarning("⚠️ [SaveManager] Aucune sauvegarde trouvée !");
+        return;
+    }
+
+    string json = File.ReadAllText(savePath);
+    currentSaveData = JsonUtility.FromJson<SaveData>(json);
+
+    // Supprimer tous les bâtiments existants
+    string[] tagsToClear = { "Building", "Feu", "Mairie" };
+    foreach (string tag in tagsToClear)
+    {
+        foreach (var building in GameObject.FindGameObjectsWithTag(tag))
         {
-            Debug.LogWarning("⚠️ [SaveManager] Aucune sauvegarde trouvée !");
-            return;
+            Destroy(building);
         }
+    }
 
-        string json = File.ReadAllText(savePath);
-        currentSaveData = JsonUtility.FromJson<SaveData>(json);
-
-        string[] tagsToClear = { "Building", "Feu", "Mairie" };
-        foreach (string tag in tagsToClear)
-        {
-            foreach (var building in GameObject.FindGameObjectsWithTag(tag))
-            {
-                Destroy(building);
-            }
-        }
-
-        foreach (var bData in currentSaveData.buildings)
-        {
-            GameObject prefab = Resources.Load<GameObject>("Prefabs/" + bData.prefabName);
+    // Recréer les bâtiments
+    foreach (var bData in currentSaveData.buildings)
+    {
+        GameObject prefab = Resources.Load<GameObject>("Prefabs/" + bData.prefabName);
             if (prefab != null)
             {
                 GameObject newObj = Instantiate(prefab, bData.position, Quaternion.identity);
                 newObj.tag = bData.tagName;
+                newObj.layer = LayerMask.NameToLayer("Building");
 
                 var identifier = newObj.AddComponent<BuildingIdentifier>();
                 identifier.prefabName = bData.prefabName;
-            }
-        }
+                if (bData.prefabName.ToLower().Contains("feu"))
+                    newObj.tag = "Feu";
+                else if (bData.prefabName.ToLower().Contains("mairie"))
+                    newObj.tag = "Mairie";
+                else
+                    newObj.tag = "Building";
 
-        foreach (var serializedPos in currentSaveData.tileDeletions.deletedTiles)
-        {
-            Vector3Int pos = serializedPos.ToVector3Int();
-            if (obstacleMap != null)
-            {
-                obstacleMap.SetTile(pos, null);
-                Debug.Log($"🗑️ [SaveManager] Suppression de la Tile Ressource à : {pos}");
-            }
+                // ✅ Si maison ou foyer, on recrée les villageois
+                if (bData.prefabName.ToLower().Contains("maison"))
+                {
+                    ResourceManager.Instance.AddPopulation(0);
+                    BuildManager.Instance.SpawnPNJsAround(bData.position, 1,newObj.transform);
+                }
+                else if (bData.prefabName.ToLower().Contains("foyer"))
+                {
+                    ResourceManager.Instance.AddPopulation(0);
+                    BuildManager.Instance.SpawnPNJsAround(bData.position, 2,newObj.transform);
+                }
+                
+                if (newObj.GetComponent<Collider2D>() == null)
+                {
+                    newObj.AddComponent<BoxCollider2D>();
+                    Debug.Log($"🧩 Collider ajouté à {newObj.name}");
+                }
         }
-
-        Debug.Log("📥 [SaveManager] Chargement terminé !");
     }
+
+    // Supprimer les Tiles récoltées
+    foreach (var serializedPos in currentSaveData.tileDeletions.deletedTiles)
+    {
+        Vector3Int pos = serializedPos.ToVector3Int();
+        if (obstacleMap != null)
+        {
+            obstacleMap.SetTile(pos, null);
+            Debug.Log($"🗑️ [SaveManager] Suppression de la Tile Ressource à : {pos}");
+        }
+    }
+
+    Debug.Log("📥 [SaveManager] Chargement terminé !");
+}
+
 
     public void RegisterTileDeletion(Vector3Int tilePosition)
     {

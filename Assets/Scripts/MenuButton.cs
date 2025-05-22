@@ -62,7 +62,10 @@ public class MenuButton : MonoBehaviour
         {
             saveManager.ResetToBaseMap();
         }
-
+        if (GameEvents.OnResetGame != null)
+        {
+            GameEvents.OnResetGame.Invoke();
+        }
         UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
     }
 

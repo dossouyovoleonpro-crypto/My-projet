@@ -4,7 +4,7 @@ using UnityEngine.Tilemaps;
 public static class PlacementValidator
 {
     private static readonly string[] forbiddenObstacleKeywords = {
-        "0111", "berry", "mountain_landscape", "arbre", "baie", "caillou", "Overworld_38", "Overworld_77", "Overworld_39", "Overworld_40", "Overworld_41", "Overworld_77", "Overworld_158", "Overworld_276"
+        "0111", "berry", "mountain_landscape", "arbre", "baie", "caillou", "mer", "overworld_276"
     };
 
     public static bool IsPositionClear(Vector3 worldPosition, Tilemap terrainMap, Tilemap obstacleMap)
@@ -23,10 +23,11 @@ public static class PlacementValidator
             }
         }
 
-        Vector2 testSize = size + new Vector2(0.8f, 0.8f);
+        // ✅ hitbox plus large
+        Vector2 testSize = size + new Vector2(1.2f, 1.2f);
         Bounds placementArea = new Bounds(worldPosition + (Vector3)offset, testSize);
 
-        // Vérifie tous les colliders dans la zone
+        // 1. Collision avec objets présents
         Collider2D[] overlaps = Physics2D.OverlapBoxAll(placementArea.center, placementArea.size, 0f);
         foreach (var hit in overlaps)
         {
@@ -42,7 +43,7 @@ public static class PlacementValidator
             }
         }
 
-        // Vérifie les tiles naturelles
+        // 2. Vérifie les tiles d'obstacles naturelles ET d'eau
         Vector2 halfSize = testSize / 2f;
         for (float x = -halfSize.x + 0.5f; x < halfSize.x; x++)
         {

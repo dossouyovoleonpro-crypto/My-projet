@@ -105,30 +105,30 @@ public class SaveManager : MonoBehaviour
     }
 
     public void LoadGame()
-{
-    if (!File.Exists(savePath))
     {
-        Debug.LogWarning("⚠️ [SaveManager] Aucune sauvegarde trouvée !");
-        return;
-    }
-
-    string json = File.ReadAllText(savePath);
-    currentSaveData = JsonUtility.FromJson<SaveData>(json);
-
-    // Supprimer tous les bâtiments existants
-    string[] tagsToClear = { "Building", "Feu", "Mairie" };
-    foreach (string tag in tagsToClear)
-    {
-        foreach (var building in GameObject.FindGameObjectsWithTag(tag))
+        if (!File.Exists(savePath))
         {
-            Destroy(building);
+            Debug.LogWarning("⚠️ [SaveManager] Aucune sauvegarde trouvée !");
+            return;
         }
-    }
 
-    // Recréer les bâtiments
-    foreach (var bData in currentSaveData.buildings)
-    {
-        GameObject prefab = Resources.Load<GameObject>("Prefabs/" + bData.prefabName);
+        string json = File.ReadAllText(savePath);
+        currentSaveData = JsonUtility.FromJson<SaveData>(json);
+
+        // Supprimer tous les bâtiments existants
+        string[] tagsToClear = { "Building", "Feu", "Mairie" };
+        foreach (string tag in tagsToClear)
+        {
+            foreach (var building in GameObject.FindGameObjectsWithTag(tag))
+            {
+                Destroy(building);
+            }
+        }
+
+        // Recréer les bâtiments
+        foreach (var bData in currentSaveData.buildings)
+        {
+            GameObject prefab = Resources.Load<GameObject>("Prefabs/" + bData.prefabName);
             if (prefab != null)
             {
                 GameObject newObj = Instantiate(prefab, bData.position, Quaternion.identity);
@@ -148,35 +148,35 @@ public class SaveManager : MonoBehaviour
                 if (bData.prefabName.ToLower().Contains("maison"))
                 {
                     ResourceManager.Instance.AddPopulation(0);
-                    BuildManager.Instance.SpawnPNJsAround(bData.position, 1,newObj.transform);
+                    BuildManager.Instance.SpawnPNJsAround(bData.position, 1, newObj.transform);
                 }
                 else if (bData.prefabName.ToLower().Contains("foyer"))
                 {
                     ResourceManager.Instance.AddPopulation(0);
-                    BuildManager.Instance.SpawnPNJsAround(bData.position, 2,newObj.transform);
+                    BuildManager.Instance.SpawnPNJsAround(bData.position, 2, newObj.transform);
                 }
-                
+
                 if (newObj.GetComponent<Collider2D>() == null)
                 {
                     newObj.AddComponent<BoxCollider2D>();
                     Debug.Log($"🧩 Collider ajouté à {newObj.name}");
                 }
+            }
         }
-    }
 
-    // Supprimer les Tiles récoltées
-    foreach (var serializedPos in currentSaveData.tileDeletions.deletedTiles)
-    {
-        Vector3Int pos = serializedPos.ToVector3Int();
-        if (obstacleMap != null)
+        // Supprimer les Tiles récoltées
+        foreach (var serializedPos in currentSaveData.tileDeletions.deletedTiles)
         {
-            obstacleMap.SetTile(pos, null);
-            Debug.Log($"🗑️ [SaveManager] Suppression de la Tile Ressource à : {pos}");
+            Vector3Int pos = serializedPos.ToVector3Int();
+            if (obstacleMap != null)
+            {
+                obstacleMap.SetTile(pos, null);
+                Debug.Log($"🗑️ [SaveManager] Suppression de la Tile Ressource à : {pos}");
+            }
         }
-    }
 
-    Debug.Log("📥 [SaveManager] Chargement terminé !");
-}
+        Debug.Log("📥 [SaveManager] Chargement terminé !");
+    }
 
 
     public void RegisterTileDeletion(Vector3Int tilePosition)
@@ -221,50 +221,50 @@ public class SaveManager : MonoBehaviour
     }
 
     public void ResetToBaseMap()
-{
-    Debug.Log("🧹 [SaveManager] Réinitialisation de la Tilemap avec la BaseMap...");
-
-    // Supprimer tous les bâtiments
-    string[] tagsToClear = { "Building", "Feu", "Mairie" };
-    foreach (string tag in tagsToClear)
     {
-        foreach (var building in GameObject.FindGameObjectsWithTag(tag))
+        string[] tagsToClear = { "Building", "Feu", "Mairie" };
+
+        foreach (string tag in tagsToClear)
         {
-            Destroy(building);
-        }
-    }
-
-    // Recharger la carte de base
-    LoadTilemap(obstacleMap, "BaseMap");
-
-    // Replacer les tiles détruites au bon endroit
-    string basePath = Application.persistentDataPath + "/Saves/BaseMap.json";
-    if (File.Exists(basePath))
-    {
-        string baseJson = File.ReadAllText(basePath);
-        TilemapSaveData baseData = JsonUtility.FromJson<TilemapSaveData>(baseJson);
-
-        foreach (var tileInfo in baseData.tiles)
-        {
-            Vector3Int pos = tileInfo.position;
-            if (!currentSaveData.tileDeletions.deletedTiles.Contains(new Vector3IntSerializable(pos)))
+            foreach (var building in GameObject.FindGameObjectsWithTag(tag))
             {
-                TileBase tile = Resources.Load<TileBase>($"Tiles/{tileInfo.tileName}");
-                if (tile != null)
-                    obstacleMap.SetTile(pos, tile);
+                bool hasObstacle = false;
+
+                ColliderSettings settings = building.GetComponent<ColliderSettings>();
+                Vector2 size = settings != null ? settings.customSize : new Vector2(1, 1);
+                Vector2 offset = settings != null ? settings.customOffset : Vector2.zero;
+
+                Vector3 basePos = building.transform.position;
+                Vector3Int startCell = obstacleMap.WorldToCell(basePos + (Vector3)offset - new Vector3(size.x / 2f, size.y / 2f, 0));
+
+
+                for (int x = 0; x < (int)size.x; x++)
+                {
+                    for (int y = 0; y < (int)size.y; y++)
+                    {
+                        Vector3Int cell = new Vector3Int(startCell.x + x, startCell.y + y, 0);
+                        if (obstacleMap.HasTile(cell))
+                        {
+                            hasObstacle = true;
+                            break;
+                        }
+                    }
+                    if (hasObstacle) break;
+                }
+
+                if (hasObstacle)
+                {
+                    Destroy(building);
+                    Debug.Log($"🧹 [SaveManager] {tag} détruit car superposé à un obstacle : {building.name}");
+                }
+
+                // Supprimer le ghost de placement s’il existe
+                if (BuildManager.Instance != null)
+                {
+                    BuildManager.Instance.ClearGhost();
+                }
+
             }
         }
-
-        Debug.Log("✅ [SaveManager] Ressources naturelles restaurées à leur position d'origine.");
     }
-    else
-    {
-        Debug.LogWarning("⚠️ [SaveManager] BaseMap.json introuvable, impossible de restaurer les ressources.");
-    }
-
-    // Nettoyer les suppressions
-    currentSaveData.tileDeletions.deletedTiles.Clear();
-    SaveGame();
 }
-
-} 

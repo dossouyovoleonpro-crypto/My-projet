@@ -14,6 +14,7 @@ public class BuildManager : MonoBehaviour
     private bool isPlacingPrefab = false;
 
     private Camera mainCamera;
+
     private GameObject ghostInstance;
     public Material ghostMaterial;
 
@@ -27,10 +28,28 @@ public class BuildManager : MonoBehaviour
         Instance = this;
     }
 
+    public GameObject GetGhostInstance()
+        {
+            return ghostInstance;
+        }
+
+
     void Start()
+{
+    if (mainCamera == null) {
+            mainCamera = Camera.main;
+        }
+
+    if (pnjPrefab == null)
     {
-        mainCamera = Camera.main;
+        pnjPrefab = Resources.Load<GameObject>("Prefabs/PNJ1");
+        if (pnjPrefab == null)
+            Debug.LogWarning("❌ Aucun prefab de PNJ1 trouvé dans Resources/Prefabs/PNJ1.");
+        else
+            Debug.Log("✅ PNJ1 chargé automatiquement depuis Resources.");
     }
+}
+
 
     void Update()
     {
@@ -103,6 +122,20 @@ public class BuildManager : MonoBehaviour
         if (ghostInstance != null)
             Destroy(ghostInstance);
     }
+
+    public void ClearGhost()
+    {
+        if (ghostInstance != null)
+        {
+            Destroy(ghostInstance);
+            ghostInstance = null;
+            Debug.Log("🧹 Ghost supprimé lors de la réinitialisation.");
+        }
+
+        selectedPrefab = null;
+        isPlacingPrefab = false;
+    }
+
 
     public GameObject GetSelectedPrefab()
     {
@@ -280,6 +313,11 @@ public class BuildManager : MonoBehaviour
                 ghostPos = offset.GetOffsetPosition(ghostPos);
 
             ghostInstance.transform.position = ghostPos;
+        }
+        if (mainCamera == null)
+        {
+            mainCamera = Camera.main;
+            if (mainCamera == null) return; 
         }
     }
 }

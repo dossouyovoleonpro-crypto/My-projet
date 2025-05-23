@@ -12,7 +12,7 @@ public class ResourceManager : MonoBehaviour
     public TextMeshProUGUI stoneText;
     public TextMeshProUGUI ironText;
     public TextMeshProUGUI goldText;
-    public TextMeshProUGUI populationText; // ✅ Nouveau champ pour la population
+    public TextMeshProUGUI populationText;
 
     // Configuration clignotement
     public Color warningColor = Color.red;
@@ -24,10 +24,12 @@ public class ResourceManager : MonoBehaviour
     public int stone = 0;
     public int iron = 0;
     public int gold = 0;
+    public int population = 3;
 
-    // ✅ Population
-    public int population = 3; // Valeur de départ
-
+    // Capacité dynamique
+    private int capacityBonus = 0;
+    private int baseCapacity = 100;
+    public int MaxCapacity => baseCapacity + capacityBonus;
 
     // Getters pour la sauvegarde
     public int GetWood() => wood;
@@ -36,7 +38,6 @@ public class ResourceManager : MonoBehaviour
     public int GetIron() => iron;
     public int GetGold() => gold;
 
-    // Setter pour recharger les ressources
     public void SetResources(int wood, int food, int stone, int iron, int gold)
     {
         this.wood = wood;
@@ -46,7 +47,6 @@ public class ResourceManager : MonoBehaviour
         this.gold = gold;
         UpdateUI();
     }
-
 
     void Awake()
     {
@@ -81,20 +81,19 @@ public class ResourceManager : MonoBehaviour
         goldText.text = gold.ToString();
 
         if (populationText != null)
-            populationText.text = population.ToString(); // ✅ Mise à jour de l'affichage population
+            populationText.text = population.ToString();
     }
 
-    // ✅ Gestion de la Population
-    public void AddPopulation(int amount) 
-    { 
-        population += amount; 
-        UpdateUI(); 
+    public void AddPopulation(int amount)
+    {
+        population += amount;
+        UpdateUI();
     }
 
-    public void RemovePopulation(int amount) 
-    { 
-        population = Mathf.Max(0, population - amount); 
-        UpdateUI(); 
+    public void RemovePopulation(int amount)
+    {
+        population = Mathf.Max(0, population - amount);
+        UpdateUI();
     }
 
     public void SetPopulation(int value)
@@ -103,17 +102,71 @@ public class ResourceManager : MonoBehaviour
         UpdateUI();
     }
 
-    // Gestion des ressources
-    public void AddWood(int amount) { wood += amount; UpdateUI(); }
-    public void RemoveWood(int amount) { wood -= amount; UpdateUI(); }
-    public void AddFood(int amount) { food += amount; UpdateUI(); }
-    public void RemoveFood(int amount) { food -= amount; UpdateUI(); }
-    public void AddStone(int amount) { stone += amount; UpdateUI(); }
-    public void RemoveStone(int amount) { stone -= amount; UpdateUI(); }
-    public void AddIron(int amount) { iron += amount; UpdateUI(); }
-    public void RemoveIron(int amount) { iron -= amount; UpdateUI(); }
-    public void AddGold(int amount) { gold += amount; UpdateUI(); }
-    public void RemoveGold(int amount) { gold -= amount; UpdateUI(); }
+    public void AddWood(int amount)
+    {
+        wood = Mathf.Min(wood + amount, MaxCapacity);
+        UpdateUI();
+    }
+
+    public void RemoveWood(int amount)
+    {
+        wood -= amount;
+        UpdateUI();
+    }
+
+    public void AddFood(int amount)
+    {
+        food = Mathf.Min(food + amount, MaxCapacity);
+        UpdateUI();
+    }
+
+    public void RemoveFood(int amount)
+    {
+        food -= amount;
+        UpdateUI();
+    }
+
+    public void AddStone(int amount)
+    {
+        stone = Mathf.Min(stone + amount, MaxCapacity);
+        UpdateUI();
+    }
+
+    public void RemoveStone(int amount)
+    {
+        stone -= amount;
+        UpdateUI();
+    }
+
+    public void AddIron(int amount)
+    {
+        iron = Mathf.Min(iron + amount, MaxCapacity);
+        UpdateUI();
+    }
+
+    public void RemoveIron(int amount)
+    {
+        iron -= amount;
+        UpdateUI();
+    }
+
+    public void AddGold(int amount)
+    {
+        gold = Mathf.Min(gold + amount, MaxCapacity);
+        UpdateUI();
+    }
+
+    public void RemoveGold(int amount)
+    {
+        gold -= amount;
+        UpdateUI();
+    }
+
+    public void AddCapacityBonus(int bonus)
+    {
+        capacityBonus += bonus;
+        Debug.Log($"📦 Capacité maximale augmentée : {MaxCapacity}");
+    }
 
     public bool HasEnoughResources(BuildingCost cost)
     {

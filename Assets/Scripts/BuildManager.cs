@@ -12,7 +12,6 @@ public class BuildManager : MonoBehaviour
     private GameObject selectedPrefab;
     private bool deleteMode = false;
     private bool isPlacingPrefab = false;
-
     private Camera mainCamera;
 
     private GameObject ghostInstance;
@@ -28,28 +27,22 @@ public class BuildManager : MonoBehaviour
         Instance = this;
     }
 
-    public GameObject GetGhostInstance()
-        {
-            return ghostInstance;
-        }
-
+    public GameObject GetGhostInstance() => ghostInstance;
 
     void Start()
-{
-    if (mainCamera == null) {
-            mainCamera = Camera.main;
-        }
-
-    if (pnjPrefab == null)
     {
-        pnjPrefab = Resources.Load<GameObject>("Prefabs/PNJ1");
-        if (pnjPrefab == null)
-            Debug.LogWarning("❌ Aucun prefab de PNJ1 trouvé dans Resources/Prefabs/PNJ1.");
-        else
-            Debug.Log("✅ PNJ1 chargé automatiquement depuis Resources.");
-    }
-}
+        if (mainCamera == null)
+            mainCamera = Camera.main;
 
+        if (pnjPrefab == null)
+        {
+            pnjPrefab = Resources.Load<GameObject>("Prefabs/PNJ1");
+            if (pnjPrefab == null)
+                Debug.LogWarning("❌ Aucun prefab de PNJ1 trouvé dans Resources/Prefabs/PNJ1.");
+            else
+                Debug.Log("✅ PNJ1 chargé automatiquement depuis Resources.");
+        }
+    }
 
     void Update()
     {
@@ -110,7 +103,6 @@ public class BuildManager : MonoBehaviour
 
         ghostInstance = Instantiate(selectedPrefab);
         ghostInstance.tag = "Ghost";
-
         ApplyGhostVisual(ghostInstance);
     }
 
@@ -136,16 +128,8 @@ public class BuildManager : MonoBehaviour
         isPlacingPrefab = false;
     }
 
-
-    public GameObject GetSelectedPrefab()
-    {
-        return selectedPrefab;
-    }
-
-    public bool HasSelectedPrefab()
-    {
-        return selectedPrefab != null && isPlacingPrefab;
-    }
+    public GameObject GetSelectedPrefab() => selectedPrefab;
+    public bool HasSelectedPrefab() => selectedPrefab != null && isPlacingPrefab;
 
     public void SetDeleteMode(bool value)
     {
@@ -153,10 +137,7 @@ public class BuildManager : MonoBehaviour
         if (value) DeselectPrefab();
     }
 
-    public bool IsDeleteMode()
-    {
-        return deleteMode;
-    }
+    public bool IsDeleteMode() => deleteMode;
 
     public void PlacePrefab(Vector2 position)
     {
@@ -182,7 +163,6 @@ public class BuildManager : MonoBehaviour
                 if (offset != null)
                     placePos = offset.GetOffsetPosition(placePos);
 
-                // 🔒 Vérifie que la position est libre (avec marge)
                 if (!PlacementValidator.IsPositionClear(placePos, GridPlacer2D.Instance.terrainMap, GridPlacer2D.Instance.obstacleMap))
                 {
                     Debug.Log("❌ Emplacement invalide : déjà occupé.");
@@ -191,12 +171,9 @@ public class BuildManager : MonoBehaviour
 
                 GameObject newObj = Instantiate(selectedPrefab, placePos, Quaternion.identity);
 
-                if (selectedPrefab.name.Contains("Feu"))
-                    newObj.tag = "Feu";
-                else if (selectedPrefab.name.Contains("Mairie"))
-                    newObj.tag = "Mairie";
-                else
-                    newObj.tag = "Building";
+                if (selectedPrefab.name.Contains("Feu")) newObj.tag = "Feu";
+                else if (selectedPrefab.name.Contains("Mairie")) newObj.tag = "Mairie";
+                else newObj.tag = "Building";
 
                 newObj.layer = LayerMask.NameToLayer("Building");
 
@@ -217,10 +194,16 @@ public class BuildManager : MonoBehaviour
                     ResourceManager.Instance.AddPopulation(3);
                     SpawnPNJsAround(placePos, 3, newObj.transform);
                 }
+
                 if (selectedPrefab.name.ToLower().Contains("foyer"))
                 {
                     ResourceManager.Instance.AddPopulation(5);
                     SpawnPNJsAround(placePos, 5, newObj.transform);
+                }
+
+                if (selectedPrefab.name.ToLower().Contains("entrepot"))
+                {
+                    ResourceManager.Instance.AddCapacityBonus(100);
                 }
             }
             else
@@ -314,10 +297,11 @@ public class BuildManager : MonoBehaviour
 
             ghostInstance.transform.position = ghostPos;
         }
+
         if (mainCamera == null)
         {
             mainCamera = Camera.main;
-            if (mainCamera == null) return; 
+            if (mainCamera == null) return;
         }
     }
 }

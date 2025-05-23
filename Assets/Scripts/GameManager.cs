@@ -32,6 +32,12 @@ public class GameManager : MonoBehaviour
         StartCoroutine(DelayedLoadAndSpawn());
     }
 
+    void Awake()
+    {
+        DontDestroyOnLoad(gameObject);
+    }
+
+
     void GenerateMap()
     {
         Debug.Log("🗺️ [GameManager] Génération de la map terminée.");

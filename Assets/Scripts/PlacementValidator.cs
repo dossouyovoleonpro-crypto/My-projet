@@ -4,7 +4,7 @@ using UnityEngine.Tilemaps;
 public static class PlacementValidator
 {
     private static readonly string[] forbiddenObstacleKeywords = {
-        "0111", "berry", "mountain_landscape", "arbre", "baie", "caillou"
+        "0111", "berry", "mountain_landscape", "arbre", "baie", "caillou", "Overworld_38", "Overworld_77", "Overworld_39", "Overworld_40", "Overworld_41", "Overworld_77", "Overworld_158", "Overworld_276"
     };
 
     public static bool IsPositionClear(Vector3 worldPosition, Tilemap terrainMap, Tilemap obstacleMap)

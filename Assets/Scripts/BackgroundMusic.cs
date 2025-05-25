@@ -8,7 +8,7 @@ public class BackgroundMusic : MonoBehaviour
     void Awake()
     {
         // Vérifie s'il existe déjà un BackgroundMusic (singleton)
-        if (FindObjectsOfType<BackgroundMusic>().Length > 1)
+        if (Object.FindObjectsByType<BackgroundMusic>(FindObjectsSortMode.None).Length > 1)
         {
             Destroy(gameObject);
             return;
@@ -21,9 +21,9 @@ public class BackgroundMusic : MonoBehaviour
     {
         audioSource = gameObject.AddComponent<AudioSource>();
         audioSource.clip = musicClip;
-        audioSource.loop = true;       // Boucle infinie
+        audioSource.loop = true;        // Boucle infinie
         audioSource.playOnAwake = true; // Démarre automatiquement
-        audioSource.volume = 0.5f;     // Volume modifiable à ton goût
+        audioSource.volume = 1f;      // Volume modifiable
         audioSource.Play();
     }
 }

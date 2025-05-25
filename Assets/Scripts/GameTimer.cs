@@ -10,6 +10,23 @@ public class GameTimer : MonoBehaviour
     private bool isPaused = false;
     private bool isAccelerated = false;
 
+    private SaveRessource saveRessource; // Référence vers le script de sauvegarde
+
+    void Start()
+    {
+        // Trouve le script SaveRessource dans la scène
+        saveRessource = FindFirstObjectByType<SaveRessource>();
+        if (saveRessource != null)
+        {
+            elapsedTime = saveRessource.GetElapsedTime();
+            Debug.Log($"🕒 Temps initial chargé : {elapsedTime} secondes");
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ Aucun SaveRessource trouvé, temps démarré à zéro.");
+        }
+    }
+
     void Update()
     {
         // Gestion des touches
@@ -19,13 +36,12 @@ public class GameTimer : MonoBehaviour
             Debug.Log(isPaused ? "⏸️ Jeu en pause" : "▶️ Jeu repris");
         }
 
-        if (Input.GetKeyDown(KeyCode.Q)) // Nouveau pour clavier AZERTY
+        if (Input.GetKeyDown(KeyCode.Q))
         {
             isAccelerated = !isAccelerated;
             Debug.Log(isAccelerated ? "⏩ Accélération activée" : "⏱️ Retour à la vitesse normale");
         }
 
-        // Mise à jour du temps si non en pause
         if (!isPaused)
         {
             float delta = Time.deltaTime * (isAccelerated ? acceleratedSpeed : 1f);
@@ -36,5 +52,10 @@ public class GameTimer : MonoBehaviour
 
             timerText.text = $"{minutes:00}:{seconds:00}";
         }
+    }
+
+    public float GetElapsedTime()
+    {
+        return elapsedTime;
     }
 }

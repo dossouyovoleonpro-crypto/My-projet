@@ -56,6 +56,7 @@ public class SaveManager : MonoBehaviour
 {
     private string savePath;
     private SaveData currentSaveData = new SaveData();
+    private bool isResetInProgress = false;
 
     public Tilemap obstacleMap; // Assigner dans l'inspecteur à 'TerrainObstacle'
 
@@ -68,11 +69,6 @@ public class SaveManager : MonoBehaviour
     void Start()
     {
         LoadGame();
-    }
-
-    void OnApplicationQuit()
-    {
-        SaveGame();
     }
 
     public void SaveGame()
@@ -221,57 +217,78 @@ public class SaveManager : MonoBehaviour
     }
 
     public void ResetToBaseMap()
-{
-    Debug.Log("🧹 [SaveManager] Réinitialisation de la Tilemap avec la BaseMap...");
-
-    // Supprimer tous les bâtiments
-    string[] tagsToClear = { "Building", "Feu", "Mairie" };
-    foreach (string tag in tagsToClear)
     {
-        foreach (var building in GameObject.FindGameObjectsWithTag(tag))
+        isResetInProgress = true;  // 🔴 On indique qu’on est en train de réinitialiser
+        Debug.Log("🧹 [SaveManager] Réinitialisation de la Tilemap avec la BaseMap...");
+
+        string[] tagsToClear = { "Building", "Feu", "Mairie" };
+        foreach (string tag in tagsToClear)
         {
-            Destroy(building);
-        }
-    }
-
-    // Recharger la carte de base
-    LoadTilemap(obstacleMap, "BaseMap");
-
-    // Replacer les tiles détruites au bon endroit
-    string basePath = Application.persistentDataPath + "/Saves/BaseMap.json";
-    if (File.Exists(basePath))
-    {
-        string baseJson = File.ReadAllText(basePath);
-        TilemapSaveData baseData = JsonUtility.FromJson<TilemapSaveData>(baseJson);
-
-        foreach (var tileInfo in baseData.tiles)
-        {
-            Vector3Int pos = tileInfo.position;
-            if (!currentSaveData.tileDeletions.deletedTiles.Contains(new Vector3IntSerializable(pos)))
+            foreach (var building in GameObject.FindGameObjectsWithTag(tag))
             {
-                TileBase tile = Resources.Load<TileBase>($"Tiles/{tileInfo.tileName}");
-                if (tile != null)
-                    obstacleMap.SetTile(pos, tile);
+                Destroy(building);
             }
         }
 
-        Debug.Log("✅ [SaveManager] Ressources naturelles restaurées à leur position d'origine.");
+        LoadTilemap(obstacleMap, "BaseMap");
+
+        string basePath = Application.persistentDataPath + "/Saves/BaseMap.json";
+        if (File.Exists(basePath))
+        {
+            string baseJson = File.ReadAllText(basePath);
+            TilemapSaveData baseData = JsonUtility.FromJson<TilemapSaveData>(baseJson);
+
+            foreach (var tileInfo in baseData.tiles)
+            {
+                Vector3Int pos = tileInfo.position;
+                if (!currentSaveData.tileDeletions.deletedTiles.Contains(new Vector3IntSerializable(pos)))
+                {
+                    TileBase tile = Resources.Load<TileBase>($"Tiles/{tileInfo.tileName}");
+                    if (tile != null)
+                        obstacleMap.SetTile(pos, tile);
+                }
+            }
+            Debug.Log("✅ [SaveManager] Ressources naturelles restaurées.");
+        }
+
+        currentSaveData.tileDeletions.deletedTiles.Clear();
+
+        var saveRessource = FindFirstObjectByType<SaveRessource>();
+        if (saveRessource != null)
+        {
+            saveRessource.ResetElapsedTime();
+            saveRessource.ResetAllResources();
+            Debug.Log("🔄 Reset des ressources");
+        }
+
+        Debug.Log("🛑 Le jeu va se fermer.");
+        #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+        #else
+            Application.Quit();
+        #endif
     }
-    else
+
+    public void SaveRessourcesIfNotReset()
     {
-        Debug.LogWarning("⚠️ [SaveManager] BaseMap.json introuvable, impossible de restaurer les ressources.");
+        if (isResetInProgress)
+        {
+            Debug.Log("⛔ Pas de sauvegarde car reset en cours.");
+            return;  // 🔴 Bloque la sauvegarde si reset
+        }
+
+        var saveRessource = FindFirstObjectByType<SaveRessource>();
+        if (saveRessource != null)
+        {
+            saveRessource.SaveRessourcesData();
+            Debug.Log("💾 Sauvegarde automatique des ressources.");
+        }
     }
 
-    // Nettoyer les suppressions
-    currentSaveData.tileDeletions.deletedTiles.Clear();
-    Debug.Log("🛑 Le jeu va se fermer. Veuillez le relancer pour commencer une nouvelle partie.");
-
-    #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-    #else
-        Application.Quit();
-    #endif
+    // Exemple de déclenchement (à appeler quand on quitte le jeu)
+    private void OnApplicationQuit()
+    {
+        SaveRessourcesIfNotReset();
+    }
 
 }
-
-} 

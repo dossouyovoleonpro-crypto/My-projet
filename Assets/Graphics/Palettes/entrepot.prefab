@@ -218,8 +218,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5eea7c298aeb2994fab918184e783465, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  woodCost: 200
-  stoneCost: 200
+  woodCost: 100
+  stoneCost: 100
   foodCost: 0
   ironCost: 0
   goldCost: 0

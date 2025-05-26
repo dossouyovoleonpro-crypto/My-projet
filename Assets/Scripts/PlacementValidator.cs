@@ -9,56 +9,64 @@ public static class PlacementValidator
 
     public static bool IsPositionClear(Vector3 worldPosition, Tilemap terrainMap, Tilemap obstacleMap)
     {
+        GameObject selectedPrefab = BuildManager.Instance.GetSelectedPrefab();
+        bool isChemin = false;
         Vector2 size = Vector2.one;
         Vector2 offset = Vector2.zero;
 
-        GameObject selectedPrefab = BuildManager.Instance.GetSelectedPrefab();
         if (selectedPrefab != null)
         {
-            ColliderSettings settings = selectedPrefab.GetComponent<ColliderSettings>();
-            if (settings != null)
+            string prefabName = selectedPrefab.name.ToLower();
+            if (prefabName.Contains("chemin"))
             {
-                size = settings.customSize;
-                offset = settings.customOffset;
+                isChemin = true;
+                size = new Vector2(0.1f, 0.1f); // Hitbox réduite pour collisions physiques
+                offset = Vector2.zero;
+            }
+            else
+            {
+                ColliderSettings settings = selectedPrefab.GetComponent<ColliderSettings>();
+                if (settings != null)
+                {
+                    size = settings.customSize;
+                    offset = settings.customOffset;
+                }
             }
         }
 
-        // ✅ hitbox plus large
-        Vector2 testSize = size + new Vector2(1.2f, 1.2f);
-        Bounds placementArea = new Bounds(worldPosition + (Vector3)offset, testSize);
+        Bounds placementArea = new Bounds(worldPosition + (Vector3)offset, size);
 
-        // 1. Collision avec objets présents
+        // 🔒 Collisions physiques : vérifie uniquement pour les bâtiments
         Collider2D[] overlaps = Physics2D.OverlapBoxAll(placementArea.center, placementArea.size, 0f);
         foreach (var hit in overlaps)
         {
-            string name = hit.gameObject.name.ToLower();
-
             if (hit.CompareTag("Building") || hit.CompareTag("Feu") || hit.CompareTag("Mairie"))
                 return false;
-
-            foreach (var keyword in forbiddenObstacleKeywords)
-            {
-                if (name.Contains(keyword))
-                    return false;
-            }
         }
 
-        // 2. Vérifie les tiles d'obstacles naturelles ET d'eau
-        Vector2 halfSize = testSize / 2f;
+        // 🔒 Vérifie les tiles interdites même pour les chemins
+        // On agrandit légèrement la zone testée
+        Vector2 tileCheckSize = selectedPrefab.name.ToLower().Contains("chemin") ? new Vector2(1f, 1f) : size;
+        Vector2 halfSize = tileCheckSize / 2f;
+
         for (float x = -halfSize.x + 0.5f; x < halfSize.x; x++)
         {
             for (float y = -halfSize.y + 0.5f; y < halfSize.y; y++)
             {
-                Vector3Int cell = terrainMap.WorldToCell(worldPosition + new Vector3(x, y, 0f));
-                TileBase tile = obstacleMap.GetTile(cell);
+                Vector3 checkPos = worldPosition + new Vector3(x, y, 0f);
+                Vector3Int cell = terrainMap.WorldToCell(checkPos);
 
-                if (tile != null)
+                TileBase[] tiles = { obstacleMap.GetTile(cell), terrainMap.GetTile(cell) };
+                foreach (TileBase tile in tiles)
                 {
-                    string tileName = tile.name.ToLower();
-                    foreach (string keyword in forbiddenObstacleKeywords)
+                    if (tile != null)
                     {
-                        if (tileName.Contains(keyword))
-                            return false;
+                        string tileName = tile.name.ToLower();
+                        foreach (string keyword in forbiddenObstacleKeywords)
+                        {
+                            if (tileName.Contains(keyword))
+                                return false;
+                        }
                     }
                 }
             }

@@ -159,13 +159,15 @@ public class BuildManager : MonoBehaviour
             if (cost != null && ResourceManager.Instance.HasEnoughResources(cost))
             {
                 Vector3 placePos = new Vector3(Mathf.Round(position.x), Mathf.Round(position.y), 0f);
+
                 PlacementOffset offset = selectedPrefab.GetComponent<PlacementOffset>();
                 if (offset != null)
                     placePos = offset.GetOffsetPosition(placePos);
 
+                // 🔒 Utilisation d'un PlacementValidator solide avec GridPlacer2D
                 if (!PlacementValidator.IsPositionClear(placePos, GridPlacer2D.Instance.terrainMap, GridPlacer2D.Instance.obstacleMap))
                 {
-                    Debug.Log("❌ Emplacement invalide : déjà occupé.");
+                    Debug.Log("❌ Emplacement invalide : zone bloquée (bâtiments, obstacles, eau).");
                     return;
                 }
 
@@ -173,6 +175,7 @@ public class BuildManager : MonoBehaviour
 
                 if (selectedPrefab.name.Contains("Feu")) newObj.tag = "Feu";
                 else if (selectedPrefab.name.Contains("Mairie")) newObj.tag = "Mairie";
+                else if (selectedPrefab.name.Contains("chemin")) newObj.tag = "Chemin";
                 else newObj.tag = "Building";
 
                 newObj.layer = LayerMask.NameToLayer("Building");
@@ -186,7 +189,7 @@ public class BuildManager : MonoBehaviour
                 BuildingIdentifier identifier = newObj.AddComponent<BuildingIdentifier>();
                 identifier.prefabName = selectedPrefab.name;
 
-                Debug.Log($"🏗️ Bâtiment placé : {selectedPrefab.name} à {placePos}");
+                Debug.Log($"🏗️ {selectedPrefab.name} placé à {placePos}");
                 ResourceManager.Instance.SpendResources(cost);
 
                 if (selectedPrefab.name.ToLower().Contains("maison"))

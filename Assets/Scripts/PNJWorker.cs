@@ -5,8 +5,8 @@ using System.Collections.Generic;
 
 public class PNJWorker : MonoBehaviour
 {
-    public float workDuration = 10f;
-    public float detectionRange = 20f;
+    public float workDuration = 5f;
+    public float detectionRange = 40f;
     public Tilemap obstacleMap;
 
     private bool isWorking = false;
@@ -137,8 +137,8 @@ public class PNJWorker : MonoBehaviour
 
         if (name.Contains("arbre"))
         {
-            resourceManager.AddWood(20);
-            Debug.Log($"🌲 [{gameObject.name}] Arbre récolté. +20 Bois.");
+            resourceManager.AddWood(40);
+            Debug.Log($"🌲 [{gameObject.name}] Arbre récolté. +40 Bois.");
         }
         else if (name.Contains("baie"))
         {
@@ -147,8 +147,8 @@ public class PNJWorker : MonoBehaviour
         }
         else if (name.Contains("caillou"))
         {
-            resourceManager.AddStone(20);
-            Debug.Log($"🪨 [{gameObject.name}] Pierre extraite. +20 Pierre.");
+            resourceManager.AddStone(40);
+            Debug.Log($"🪨 [{gameObject.name}] Pierre extraite. +40 Pierre.");
         }
     }
 
@@ -158,8 +158,8 @@ public class PNJWorker : MonoBehaviour
 
         if (tileName.Contains("0111"))
         {
-            resourceManager.AddWood(20);
-            Debug.Log($"🌲 [{gameObject.name}] Arbre Tile récolté. +20 Bois.");
+            resourceManager.AddWood(40);
+            Debug.Log($"🌲 [{gameObject.name}] Arbre Tile récolté. +40 Bois.");
         }
         else if (tileName.Contains("berry"))
         {
@@ -168,8 +168,8 @@ public class PNJWorker : MonoBehaviour
         }
         else if (tileName.Contains("mountain_landscape"))
         {
-            resourceManager.AddStone(20);
-            Debug.Log($"🪨 [{gameObject.name}] Pierre Tile extraite. +20 Pierre.");
+            resourceManager.AddStone(40);
+            Debug.Log($"🪨 [{gameObject.name}] Pierre Tile extraite. +40 Pierre.");
         }
     }
 

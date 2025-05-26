@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 125295476266980271}
   m_Layer: 0
   m_Name: PNJ1
-  m_TagString: Untagged
+  m_TagString: PNJ
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -169,5 +169,3 @@ MonoBehaviour:
   workDuration: 10
   detectionRange: 20
   obstacleMap: {fileID: 0}
-  woodTag: 0111
-  berryTag: berry

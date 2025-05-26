@@ -23,6 +23,7 @@ public class SaveRessource : MonoBehaviour
     {
         savePath = Application.persistentDataPath + "/ressources.json";
         data = new RessourceData();
+        LoadRessources();
     }
 
     void Start()

@@ -100,7 +100,7 @@ public class SaveManager : MonoBehaviour
         Debug.Log($"✅ [SaveManager] Sauvegarde effectuée à : {savePath}");
     }
 
-    public void LoadGame()
+    public void LoadGame(bool skipTileDeletions = false)
 {
     if (!File.Exists(savePath))
     {
@@ -125,49 +125,52 @@ public class SaveManager : MonoBehaviour
     foreach (var bData in currentSaveData.buildings)
     {
         GameObject prefab = Resources.Load<GameObject>("Prefabs/" + bData.prefabName);
-            if (prefab != null)
+        if (prefab != null)
+        {
+            GameObject newObj = Instantiate(prefab, bData.position, Quaternion.identity);
+            newObj.tag = bData.tagName;
+            newObj.layer = LayerMask.NameToLayer("Building");
+
+            var identifier = newObj.AddComponent<BuildingIdentifier>();
+            identifier.prefabName = bData.prefabName;
+
+            if (bData.prefabName.ToLower().Contains("feu"))
+                newObj.tag = "Feu";
+            else if (bData.prefabName.ToLower().Contains("mairie"))
+                newObj.tag = "Mairie";
+            else
+                newObj.tag = "Building";
+
+            if (bData.prefabName.ToLower().Contains("maison"))
             {
-                GameObject newObj = Instantiate(prefab, bData.position, Quaternion.identity);
-                newObj.tag = bData.tagName;
-                newObj.layer = LayerMask.NameToLayer("Building");
+                ResourceManager.Instance.AddPopulation(0);
+                BuildManager.Instance.SpawnPNJsAround(bData.position, 1, newObj.transform);
+            }
+            else if (bData.prefabName.ToLower().Contains("foyer"))
+            {
+                ResourceManager.Instance.AddPopulation(0);
+                BuildManager.Instance.SpawnPNJsAround(bData.position, 2, newObj.transform);
+            }
 
-                var identifier = newObj.AddComponent<BuildingIdentifier>();
-                identifier.prefabName = bData.prefabName;
-                if (bData.prefabName.ToLower().Contains("feu"))
-                    newObj.tag = "Feu";
-                else if (bData.prefabName.ToLower().Contains("mairie"))
-                    newObj.tag = "Mairie";
-                else
-                    newObj.tag = "Building";
-
-                // ✅ Si maison ou foyer, on recrée les villageois
-                if (bData.prefabName.ToLower().Contains("maison"))
-                {
-                    ResourceManager.Instance.AddPopulation(0);
-                    BuildManager.Instance.SpawnPNJsAround(bData.position, 1,newObj.transform);
-                }
-                else if (bData.prefabName.ToLower().Contains("foyer"))
-                {
-                    ResourceManager.Instance.AddPopulation(0);
-                    BuildManager.Instance.SpawnPNJsAround(bData.position, 2,newObj.transform);
-                }
-                
-                if (newObj.GetComponent<Collider2D>() == null)
-                {
-                    newObj.AddComponent<BoxCollider2D>();
-                    Debug.Log($"🧩 Collider ajouté à {newObj.name}");
-                }
+            if (newObj.GetComponent<Collider2D>() == null)
+            {
+                newObj.AddComponent<BoxCollider2D>();
+                Debug.Log($"🧩 Collider ajouté à {newObj.name}");
+            }
         }
     }
 
-    // Supprimer les Tiles récoltées
-    foreach (var serializedPos in currentSaveData.tileDeletions.deletedTiles)
+    // Supprimer les Tiles récoltées sauf si on est en reset
+    if (!skipTileDeletions)
     {
-        Vector3Int pos = serializedPos.ToVector3Int();
-        if (obstacleMap != null)
+        foreach (var serializedPos in currentSaveData.tileDeletions.deletedTiles)
         {
-            obstacleMap.SetTile(pos, null);
-            Debug.Log($"🗑️ [SaveManager] Suppression de la Tile Ressource à : {pos}");
+            Vector3Int pos = serializedPos.ToVector3Int();
+            if (obstacleMap != null)
+            {
+                obstacleMap.SetTile(pos, null);
+                Debug.Log($"🗑️ [SaveManager] Suppression de la Tile Ressource à : {pos}");
+            }
         }
     }
 
@@ -216,58 +219,52 @@ public class SaveManager : MonoBehaviour
         Debug.Log($"📥 [SaveManager] Map {saveName} chargée.");
     }
 
-    public void ResetToBaseMap()
+public void ResetToBaseMap()
+{
+    isResetInProgress = true;
+    Debug.Log("🧹 [SaveManager] Réinitialisation de la Tilemap avec la BaseMap...");
+
+    string[] tagsToClear = { "Building", "Feu", "Mairie" };
+    foreach (string tag in tagsToClear)
     {
-        isResetInProgress = true;  // 🔴 On indique qu’on est en train de réinitialiser
-        Debug.Log("🧹 [SaveManager] Réinitialisation de la Tilemap avec la BaseMap...");
-
-        string[] tagsToClear = { "Building", "Feu", "Mairie" };
-        foreach (string tag in tagsToClear)
+        foreach (var building in GameObject.FindGameObjectsWithTag(tag))
         {
-            foreach (var building in GameObject.FindGameObjectsWithTag(tag))
-            {
-                Destroy(building);
-            }
+            Destroy(building);
         }
-
-        LoadTilemap(obstacleMap, "BaseMap");
-
-        string basePath = Application.persistentDataPath + "/Saves/BaseMap.json";
-        if (File.Exists(basePath))
-        {
-            string baseJson = File.ReadAllText(basePath);
-            TilemapSaveData baseData = JsonUtility.FromJson<TilemapSaveData>(baseJson);
-
-            foreach (var tileInfo in baseData.tiles)
-            {
-                Vector3Int pos = tileInfo.position;
-                if (!currentSaveData.tileDeletions.deletedTiles.Contains(new Vector3IntSerializable(pos)))
-                {
-                    TileBase tile = Resources.Load<TileBase>($"Tiles/{tileInfo.tileName}");
-                    if (tile != null)
-                        obstacleMap.SetTile(pos, tile);
-                }
-            }
-            Debug.Log("✅ [SaveManager] Ressources naturelles restaurées.");
-        }
-
-        currentSaveData.tileDeletions.deletedTiles.Clear();
-
-        var saveRessource = FindFirstObjectByType<SaveRessource>();
-        if (saveRessource != null)
-        {
-            saveRessource.ResetElapsedTime();
-            saveRessource.ResetAllResources();
-            Debug.Log("🔄 Reset des ressources");
-        }
-
-        Debug.Log("🛑 Le jeu va se fermer.");
-        #if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-        #else
-            Application.Quit();
-        #endif
     }
+
+    foreach (var pnj in GameObject.FindGameObjectsWithTag("PNJ"))
+    {
+        Destroy(pnj);
+    }
+
+    // Recharge la carte depuis BaseMap
+    LoadTilemap(obstacleMap, "BaseMap");
+
+    // 🔸 Supprime toutes les infos des tiles supprimées et sauvegarde le fichier
+    currentSaveData.tileDeletions.deletedTiles.Clear();
+    File.WriteAllText(savePath, JsonUtility.ToJson(currentSaveData, true));
+    Debug.Log("💾 Tiles supprimées effacées du fichier sauvegarde.");
+
+    var saveRessource = FindFirstObjectByType<SaveRessource>();
+    if (saveRessource != null)
+    {
+        saveRessource.ResetElapsedTime();
+        saveRessource.ResetAllResources();
+        Debug.Log("🔄 Reset des ressources");
+    }
+
+    Debug.Log("🛑 Le jeu va se fermer.");
+    #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+    #else
+        Application.Quit();
+    #endif
+}
+
+
+
+
 
     public void SaveRessourcesIfNotReset()
     {

@@ -2,18 +2,19 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class PNJAdvanceWorker : MonoBehaviour
+public class PNJAdvenceWorker : MonoBehaviour
 {
     public float workDuration = 10f;     // Temps passé dans la ferme ou mine
     public float detectionRange = 40f;   // Portée de détection
     public float cooldownDuration = 20f; // Cooldown après récolte
     private bool isWorking = false;
+    public bool IsWorking => isWorking;  // Permet à d'autres scripts de savoir si on travaille
+
     private ResourceManager resourceManager;
 
     private static HashSet<GameObject> occupiedResources = new HashSet<GameObject>();
     private static Dictionary<GameObject, float> resourceCooldowns = new Dictionary<GameObject, float>();
 
-    // Liste des noms exacts de prefab correspondant à des ressources illimitées
     private readonly string[] resourceNames = { "Ferme", "Pierre", "or", "Fer" };
 
     void Start()
@@ -32,13 +33,14 @@ public class PNJAdvanceWorker : MonoBehaviour
 
                 if (target != null)
                 {
+                    Debug.Log($"✅ [{gameObject.name}] Ressource trouvée : {target.name}");
                     occupiedResources.Add(target);
                     yield return WorkInResource(target);
                     occupiedResources.Remove(target);
                 }
                 else
                 {
-                    Debug.Log($"❌ [{gameObject.name}] Aucune ressource disponible à proximité.");
+                    Debug.Log($"❌ [{gameObject.name}] Aucune ressource bâtiment détectée à proximité.");
                 }
             }
             yield return new WaitForSeconds(1f);
@@ -53,14 +55,30 @@ public class PNJAdvanceWorker : MonoBehaviour
 
         foreach (var obj in allObjects)
         {
-            if (!IsResource(obj) || occupiedResources.Contains(obj)) continue;
+            Debug.Log($"🔍 Vérification objet : {obj.name}");
+
+            if (!IsResource(obj))
+            {
+                Debug.Log($"⛔ {obj.name} n'est pas une ressource bâtiment.");
+                continue;
+            }
+
+            if (occupiedResources.Contains(obj))
+            {
+                Debug.Log($"⏳ {obj.name} déjà occupé.");
+                continue;
+            }
 
             if (resourceCooldowns.ContainsKey(obj) && Time.time < resourceCooldowns[obj])
+            {
+                Debug.Log($"🕒 {obj.name} en cooldown.");
                 continue;
+            }
 
             float dist = Vector3.Distance(transform.position, obj.transform.position);
             if (dist < minDistance && dist <= detectionRange)
             {
+                Debug.Log($"🎯 Candidat potentiel : {obj.name} à distance {dist}");
                 minDistance = dist;
                 nearest = obj;
             }
@@ -73,7 +91,8 @@ public class PNJAdvanceWorker : MonoBehaviour
     {
         foreach (var res in resourceNames)
         {
-            if (obj.name.Equals(res, System.StringComparison.OrdinalIgnoreCase))
+            // 🔥 Modification pour tolérer les suffixes "(Clone)" ou autres
+            if (obj.name.StartsWith(res, System.StringComparison.OrdinalIgnoreCase))
                 return true;
         }
         return false;
@@ -82,7 +101,7 @@ public class PNJAdvanceWorker : MonoBehaviour
     IEnumerator WorkInResource(GameObject resource)
     {
         Vector3 targetPosition = resource.transform.position;
-        Debug.Log($"🚜 [{gameObject.name}] Se dirige vers {resource.name}");
+        isWorking = true;
 
         while (Vector3.Distance(transform.position, targetPosition) > 0.1f)
         {
@@ -90,8 +109,6 @@ public class PNJAdvanceWorker : MonoBehaviour
             yield return null;
         }
 
-        Debug.Log($"⛏️ [{gameObject.name}] Commence le travail dans {resource.name}");
-        isWorking = true;
         float timer = 0f;
         while (timer < workDuration)
         {
@@ -100,31 +117,27 @@ public class PNJAdvanceWorker : MonoBehaviour
             yield return null;
         }
 
-        // Ajoute la ressource en fonction du prefab exact
         switch (resource.name)
         {
-            case "Ferme":
+            case string s when s.StartsWith("Ferme", System.StringComparison.OrdinalIgnoreCase):
                 resourceManager.AddFood(20);
-                Debug.Log($"✅ [{gameObject.name}] +20 Nourriture récoltée depuis {resource.name}");
+                Debug.Log($"🍽️ [{gameObject.name}] +20 Nourriture depuis {resource.name}");
                 break;
-            case "Pierre":
+            case string s when s.StartsWith("Pierre", System.StringComparison.OrdinalIgnoreCase):
                 resourceManager.AddStone(40);
-                Debug.Log($"✅ [{gameObject.name}] +40 Pierre récoltée depuis {resource.name}");
+                Debug.Log($"🪨 [{gameObject.name}] +40 Pierre depuis {resource.name}");
                 break;
-            case "or":
+            case string s when s.StartsWith("or", System.StringComparison.OrdinalIgnoreCase):
                 resourceManager.AddGold(40);
-                Debug.Log($"✅ [{gameObject.name}] +20 Or récolté depuis {resource.name}");
+                Debug.Log($"💰 [{gameObject.name}] +40 Or depuis {resource.name}");
                 break;
-            case "Fer":
+            case string s when s.StartsWith("Fer", System.StringComparison.OrdinalIgnoreCase):
                 resourceManager.AddIron(40);
-                Debug.Log($"✅ [{gameObject.name}] +20 Fer récolté depuis {resource.name}");
+                Debug.Log($"⚙️ [{gameObject.name}] +40 Fer depuis {resource.name}");
                 break;
         }
 
-        // Met en cooldown
         resourceCooldowns[resource] = Time.time + cooldownDuration;
-        Debug.Log($"⏳ [{resource.name}] est en cooldown pendant {cooldownDuration}s");
-
         isWorking = false;
     }
 }

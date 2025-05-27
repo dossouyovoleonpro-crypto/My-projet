@@ -22,14 +22,6 @@ public class PNJWorker : MonoBehaviour
         resourceManager = ResourceManager.Instance;
         dayNightController = FindFirstObjectByType<DayNightCycle>();
 
-        if (dayNightController == null)
-            Debug.LogError("❌ [PNJWorker] DayNightCycle non trouvé !");
-        else
-            Debug.Log("✅ [PNJWorker] DayNightCycle trouvé.");
-
-        if (obstacleMap == null)
-            Debug.LogError("❌ [PNJWorker] obstacleMap non assignée !");
-
         StartCoroutine(WorkCycle());
     }
 
@@ -37,6 +29,13 @@ public class PNJWorker : MonoBehaviour
     {
         while (true)
         {
+            PNJAdvenceWorker advanceWorker = GetComponent<PNJAdvenceWorker>();
+            if (advanceWorker != null && advanceWorker.IsWorking)
+            {
+                yield return new WaitForSeconds(1f);
+                continue;
+            }
+
             if (!isWorking && dayNightController != null && dayNightController.IsDayTime())
             {
                 GameObject targetGO = FindNearestWorkTarget();
@@ -54,10 +53,6 @@ public class PNJWorker : MonoBehaviour
                     yield return HandleTileResource(targetTile.Value);
                     occupiedTiles.Remove(targetTile.Value);
                 }
-                else
-                {
-                    Debug.Log($"❌ [{gameObject.name}] Aucun élément trouvé à proximité.");
-                }
             }
             yield return new WaitForSeconds(1f);
         }
@@ -66,7 +61,6 @@ public class PNJWorker : MonoBehaviour
     IEnumerator HandleGameObjectResource(GameObject target)
     {
         targetPosition = target.transform.position;
-        Debug.Log($"🎯 [{gameObject.name}] Cible GameObject trouvée : {target.name}");
 
         yield return MoveToTarget(targetPosition);
 
@@ -83,7 +77,6 @@ public class PNJWorker : MonoBehaviour
         {
             ProcessResource(target);
             Destroy(target);
-            Debug.Log($"✅ [{gameObject.name}] Travail terminé sur {target.name}.");
         }
 
         isWorking = false;
@@ -92,16 +85,12 @@ public class PNJWorker : MonoBehaviour
     IEnumerator HandleTileResource(Vector3Int cellPos)
     {
         Vector3 worldPos = obstacleMap.GetCellCenterWorld(cellPos);
-        Debug.Log($"🎯 [{gameObject.name}] Cible Tile trouvée à {worldPos}");
 
         yield return MoveToTarget(worldPos);
 
         TileBase tile = obstacleMap.GetTile(cellPos);
         if (tile == null)
-        {
-            Debug.LogWarning($"⚠️ [PNJWorker] Tile inexistante à {cellPos}, abandon immédiat de la récolte !");
             yield break;
-        }
 
         isWorking = true;
         float timer = 0f;
@@ -121,11 +110,6 @@ public class PNJWorker : MonoBehaviour
 
             ProcessTile(tile);
             obstacleMap.SetTile(cellPos, null);
-            Debug.Log($"✅ [{gameObject.name}] Travail terminé sur la Tile.");
-        }
-        else
-        {
-            Debug.LogWarning($"⚠️ [{gameObject.name}] Tile inexistante à {cellPos}, tentative de récolte annulée !");
         }
 
         isWorking = false;
@@ -136,20 +120,11 @@ public class PNJWorker : MonoBehaviour
         string name = target.name.ToLower();
 
         if (name.Contains("arbre"))
-        {
             resourceManager.AddWood(40);
-            Debug.Log($"🌲 [{gameObject.name}] Arbre récolté. +40 Bois.");
-        }
         else if (name.Contains("baie"))
-        {
             resourceManager.AddFood(20);
-            Debug.Log($"🍓 [{gameObject.name}] Baie récoltée. +20 Nourriture.");
-        }
         else if (name.Contains("caillou"))
-        {
             resourceManager.AddStone(40);
-            Debug.Log($"🪨 [{gameObject.name}] Pierre extraite. +40 Pierre.");
-        }
     }
 
     void ProcessTile(TileBase tile)
@@ -157,20 +132,11 @@ public class PNJWorker : MonoBehaviour
         string tileName = tile.name.ToLower();
 
         if (tileName.Contains("0111"))
-        {
             resourceManager.AddWood(40);
-            Debug.Log($"🌲 [{gameObject.name}] Arbre Tile récolté. +40 Bois.");
-        }
         else if (tileName.Contains("berry"))
-        {
             resourceManager.AddFood(20);
-            Debug.Log($"🍓 [{gameObject.name}] Baie Tile récoltée. +20 Nourriture.");
-        }
         else if (tileName.Contains("mountain_landscape"))
-        {
             resourceManager.AddStone(40);
-            Debug.Log($"🪨 [{gameObject.name}] Pierre Tile extraite. +40 Pierre.");
-        }
     }
 
     GameObject FindNearestWorkTarget()
@@ -181,8 +147,7 @@ public class PNJWorker : MonoBehaviour
 
         foreach (var obj in allObjects)
         {
-            if (obj.CompareTag("Ghost")) continue;
-            if (occupiedResources.Contains(obj)) continue;
+            if (obj.CompareTag("Ghost") || occupiedResources.Contains(obj)) continue;
 
             string name = obj.name.ToLower();
             if (name.Contains("arbre") || name.Contains("baie") || name.Contains("caillou"))
@@ -227,22 +192,15 @@ public class PNJWorker : MonoBehaviour
             }
         }
 
-        if (!found)
-            Debug.LogWarning($"❌ [{gameObject.name}] Aucune Tile naturelle trouvée à proximité.");
-
         return found ? nearestCell : (Vector3Int?)null;
     }
 
     IEnumerator MoveToTarget(Vector3 destination)
     {
-        Debug.Log($"🚶 [{gameObject.name}] En route vers {destination}");
-
         while (Vector3.Distance(transform.position, destination) > 0.1f)
         {
             transform.position = Vector3.MoveTowards(transform.position, destination, Time.deltaTime * 2f);
             yield return null;
         }
-
-        Debug.Log($"📍 [{gameObject.name}] Arrivé à destination.");
     }
 }

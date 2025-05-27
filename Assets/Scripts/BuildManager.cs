@@ -16,6 +16,11 @@ public class BuildManager : MonoBehaviour
 
     private GameObject ghostInstance;
     public Material ghostMaterial;
+    public bool IsBuildMode() { return selectedPrefab != null && isPlacingPrefab; }
+
+    public GameObject GetSelectedPrefab() => selectedPrefab;
+
+
 
     void Awake()
     {
@@ -127,8 +132,6 @@ public class BuildManager : MonoBehaviour
         selectedPrefab = null;
         isPlacingPrefab = false;
     }
-
-    public GameObject GetSelectedPrefab() => selectedPrefab;
     public bool HasSelectedPrefab() => selectedPrefab != null && isPlacingPrefab;
 
     public void SetDeleteMode(bool value)

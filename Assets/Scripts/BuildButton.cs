@@ -4,6 +4,7 @@ using UnityEngine.UI;
 public class BuildButton : MonoBehaviour
 {
     public GameObject prefabToPlace;
+    public ResourceInfoDisplay resourceInfoDisplay; // Ajoute cette référence
 
     void Start()
     {
@@ -15,8 +16,7 @@ public class BuildButton : MonoBehaviour
         if (BuildManager.Instance.IsDeleteMode())
         {
             BuildManager.Instance.SetDeleteMode(false);
-            
-            // ✅ Recherche et remet la couleur normale sur le bouton "Supprimer"
+
             DeleteButton deleteButton = Object.FindFirstObjectByType<DeleteButton>();
             if (deleteButton != null)
             {
@@ -26,11 +26,18 @@ public class BuildButton : MonoBehaviour
             Debug.Log("Mode suppression désactivé via bouton de construction.");
         }
 
-        BuildingCost cost = prefabToPlace.GetComponent<BuildingCost>();
-        if (cost != null && !ResourceManager.Instance.HasEnoughResources(cost))
+        BuildingCost costCheck = prefabToPlace.GetComponent<BuildingCost>();
+
+        // Affiche le coût même si les ressources sont insuffisantes
+        if (resourceInfoDisplay != null && costCheck != null)
+        {
+            resourceInfoDisplay.DisplayCost(costCheck); // Nouvelle fonction à ajouter dans ResourceInfoDisplay
+        }
+
+        if (costCheck != null && !ResourceManager.Instance.HasEnoughResources(costCheck))
         {
             Debug.Log("Pas assez de ressources pour construire !");
-            return;
+            // ❌ Ne fais pas 'return', on laisse la sélection du prefab pour afficher le coût
         }
 
         if (BuildManager.Instance.GetSelectedPrefab() == prefabToPlace)

@@ -1,26 +1,38 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections.Generic;
+
 
 public class MenuButton : MonoBehaviour
 {
     public GameObject menuPanel;
-    public Button closeButton;
-    public Button saveButton;
-    public Button loadButton;
+    public GameObject questPanel;
+    public GameObject skillTreePanel;
+
+
+    public List<Button> closeButtons;
+    public Button questButton;
+    public Button skillTreeButton;
     public Button resetButton;
     public Button statsButton;
 
+
+
     void Start()
     {
-        // Assignation des listeners pour chaque bouton
+        foreach (Button btn in closeButtons)
+        {
+            btn.onClick.AddListener(CloseMenu);
+        }
+
         GetComponent<Button>().onClick.AddListener(ToggleMenu);
-        closeButton.onClick.AddListener(CloseMenu);
-        saveButton.onClick.AddListener(SaveGame);
-        loadButton.onClick.AddListener(LoadGame);
         resetButton.onClick.AddListener(ResetGame);
         statsButton.onClick.AddListener(OpenStats);
+        questButton.onClick.AddListener(OpenQuestPanel);
+        skillTreeButton.onClick.AddListener(OpenSkillTreePanel);
 
-        // Masquer le menu au démarrage
+        questPanel.SetActive(false);
+        skillTreePanel.SetActive(false);
         menuPanel.SetActive(false);
     }
 
@@ -28,29 +40,17 @@ public class MenuButton : MonoBehaviour
     {
         bool isActive = menuPanel.activeSelf;
         menuPanel.SetActive(!isActive);
-        Debug.Log("Menu " + (isActive ? "fermé" : "ouvert"));
     }
 
     void CloseMenu()
     {
         menuPanel.SetActive(false);
-        Debug.Log("Menu fermé via la croix.");
     }
 
-    void SaveGame()
+    void OpenSkillTreePanel()
     {
-        Debug.Log("💾 Sauvegarde de la partie...");
-        SaveManager saveManager = FindFirstObjectByType<SaveManager>();
-        if (saveManager != null)
-            saveManager.SaveGame();
-    }
-
-    void LoadGame()
-    {
-        Debug.Log("📂 Chargement de la sauvegarde...");
-        SaveManager saveManager = FindFirstObjectByType<SaveManager>();
-        if (saveManager != null)
-            saveManager.LoadGame();
+        skillTreePanel.SetActive(true);
+        questPanel.SetActive(false);
     }
 
     void ResetGame()
@@ -67,6 +67,13 @@ public class MenuButton : MonoBehaviour
             GameEvents.OnResetGame.Invoke();
         }
         UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+    }
+
+        void OpenQuestPanel()
+    {
+        menuPanel.SetActive(false);  // Ferme le menu principal
+        questPanel.SetActive(true);  // Ouvre le panneau Quête
+        Debug.Log("📜 Panneau Quêtes ouvert.");
     }
 
 

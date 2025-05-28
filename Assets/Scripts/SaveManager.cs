@@ -260,6 +260,10 @@ public void ResetToBaseMap()
         Debug.Log("🔄 Reset des ressources");
     }
 
+    string emptyJson = "{}";
+    File.WriteAllText(savePath, emptyJson);
+    Debug.Log("🧹 [SaveManager] Fichier save.json réinitialisé à vide.");
+
 
     Debug.Log("🛑 Le jeu va se fermer.");
     #if UNITY_EDITOR

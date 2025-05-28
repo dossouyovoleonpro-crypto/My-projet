@@ -14,6 +14,8 @@ public static class PlacementValidator
         Vector2 size = Vector2.one;
         Vector2 offset = Vector2.zero;
 
+        if (isChemin) {}
+
         if (selectedPrefab != null)
         {
             string prefabName = selectedPrefab.name.ToLower();

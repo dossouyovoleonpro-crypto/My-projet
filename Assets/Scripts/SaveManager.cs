@@ -125,38 +125,44 @@ public class SaveManager : MonoBehaviour
     foreach (var bData in currentSaveData.buildings)
     {
         GameObject prefab = Resources.Load<GameObject>("Prefabs/" + bData.prefabName);
-        if (prefab != null)
-        {
-            GameObject newObj = Instantiate(prefab, bData.position, Quaternion.identity);
-            newObj.tag = bData.tagName;
-            newObj.layer = LayerMask.NameToLayer("Building");
-
-            var identifier = newObj.AddComponent<BuildingIdentifier>();
-            identifier.prefabName = bData.prefabName;
-
-            if (bData.prefabName.ToLower().Contains("feu"))
-                newObj.tag = "Feu";
-            else if (bData.prefabName.ToLower().Contains("mairie"))
-                newObj.tag = "Mairie";
-            else
-                newObj.tag = "Building";
-
-            if (bData.prefabName.ToLower().Contains("maison"))
+            if (prefab != null)
             {
-                ResourceManager.Instance.AddPopulation(0);
-                BuildManager.Instance.SpawnPNJsAround(bData.position, 1, newObj.transform);
-            }
-            else if (bData.prefabName.ToLower().Contains("foyer"))
-            {
-                ResourceManager.Instance.AddPopulation(0);
-                BuildManager.Instance.SpawnPNJsAround(bData.position, 2, newObj.transform);
-            }
+                GameObject newObj = Instantiate(prefab, bData.position, Quaternion.identity);
+                newObj.tag = bData.tagName;
+                newObj.layer = LayerMask.NameToLayer("Building");
 
-            if (newObj.GetComponent<Collider2D>() == null)
-            {
-                newObj.AddComponent<BoxCollider2D>();
-                Debug.Log($"🧩 Collider ajouté à {newObj.name}");
-            }
+                var identifier = newObj.AddComponent<BuildingIdentifier>();
+                identifier.prefabName = bData.prefabName;
+
+                if (bData.prefabName.ToLower().Contains("feu"))
+                    newObj.tag = "Feu";
+                else if (bData.prefabName.ToLower().Contains("mairie"))
+                    newObj.tag = "Mairie";
+                else
+                    newObj.tag = "Building";
+
+                if (bData.prefabName.ToLower().Contains("maison"))
+                {
+                    ResourceManager.Instance.AddPopulation(0);
+                    BuildManager.Instance.SpawnPNJsAround(bData.position, 1, newObj.transform);
+                }
+                else if (bData.prefabName.ToLower().Contains("foyer"))
+                {
+                    ResourceManager.Instance.AddPopulation(0);
+                    BuildManager.Instance.SpawnPNJsAround(bData.position, 2, newObj.transform);
+                }
+
+                if (newObj.GetComponent<Collider2D>() == null)
+                {
+                    newObj.AddComponent<BoxCollider2D>();
+                    Debug.Log($"🧩 Collider ajouté à {newObj.name}");
+                }
+            
+                if (bData.prefabName.ToLower().Contains("entrepot"))
+                {
+                    ResourceManager.Instance?.AddCapacityBonus(100);
+                    Debug.Log("📦 Entrepôt chargé : +100 capacité.");
+                }
         }
     }
 
@@ -254,9 +260,6 @@ public void ResetToBaseMap()
         Debug.Log("🔄 Reset des ressources");
     }
 
-    string emptyJson = "{}";
-    File.WriteAllText(savePath, emptyJson);
-    Debug.Log("🧹 [SaveManager] Fichier save.json réinitialisé à vide.");
 
     Debug.Log("🛑 Le jeu va se fermer.");
     #if UNITY_EDITOR

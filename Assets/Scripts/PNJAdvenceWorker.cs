@@ -8,7 +8,7 @@ public class PNJAdvenceWorker : MonoBehaviour
     public float detectionRange = 40f;   // Portée de détection
     public float cooldownDuration = 20f; // Cooldown après récolte
     private bool isWorking = false;
-    public bool IsWorking => isWorking;  // Permet à d'autres scripts de savoir si on travaille
+    public bool IsWorking => isWorking;
 
     private ResourceManager resourceManager;
 
@@ -91,7 +91,6 @@ public class PNJAdvenceWorker : MonoBehaviour
     {
         foreach (var res in resourceNames)
         {
-            // 🔥 Modification pour tolérer les suffixes "(Clone)" ou autres
             if (obj.name.StartsWith(res, System.StringComparison.OrdinalIgnoreCase))
                 return true;
         }

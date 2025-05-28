@@ -211,6 +211,16 @@ public class BuildManager : MonoBehaviour
                 {
                     ResourceManager.Instance.AddCapacityBonus(100);
                 }
+                SaveManager saveManager = FindFirstObjectByType<SaveManager>();
+                if (saveManager != null)
+                {
+                    saveManager.SaveGame();
+                    Debug.Log("💾 Bâtiment sauvegardé immédiatement après placement.");
+                }
+                else
+                {
+                    Debug.LogWarning("❌ [BuildManager] SaveManager non trouvé, sauvegarde non effectuée.");
+                }
             }
             else
             {

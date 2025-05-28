@@ -14,23 +14,20 @@ public static class PlacementValidator
         Vector2 size = Vector2.one;
         Vector2 offset = Vector2.zero;
 
-        if (isChemin) {}
-
         if (selectedPrefab != null)
         {
             string prefabName = selectedPrefab.name.ToLower();
             if (prefabName.Contains("chemin"))
             {
                 isChemin = true;
-                size = new Vector2(0.1f, 0.1f); // Hitbox réduite pour collisions physiques
-                offset = Vector2.zero;
+                size = new Vector2(0.1f, 0.1f);
             }
             else
             {
                 ColliderSettings settings = selectedPrefab.GetComponent<ColliderSettings>();
                 if (settings != null)
                 {
-                    size = settings.customSize;
+                    size = settings.customSize + new Vector2(0.2f, 0.2f);  // Ajout d'une marge
                     offset = settings.customOffset;
                 }
             }
@@ -38,7 +35,6 @@ public static class PlacementValidator
 
         Bounds placementArea = new Bounds(worldPosition + (Vector3)offset, size);
 
-        // 🔒 Collisions physiques : vérifie uniquement pour les bâtiments
         Collider2D[] overlaps = Physics2D.OverlapBoxAll(placementArea.center, placementArea.size, 0f);
         foreach (var hit in overlaps)
         {
@@ -46,9 +42,7 @@ public static class PlacementValidator
                 return false;
         }
 
-        // 🔒 Vérifie les tiles interdites même pour les chemins
-        // On agrandit légèrement la zone testée
-        Vector2 tileCheckSize = selectedPrefab.name.ToLower().Contains("chemin") ? new Vector2(1f, 1f) : size;
+        Vector2 tileCheckSize = isChemin ? new Vector2(1f, 1f) : size;
         Vector2 halfSize = tileCheckSize / 2f;
 
         for (float x = -halfSize.x + 0.5f; x < halfSize.x; x++)

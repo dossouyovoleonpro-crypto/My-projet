@@ -20,8 +20,6 @@ public class BuildManager : MonoBehaviour
 
     public GameObject GetSelectedPrefab() => selectedPrefab;
 
-
-
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -167,7 +165,6 @@ public class BuildManager : MonoBehaviour
                 if (offset != null)
                     placePos = offset.GetOffsetPosition(placePos);
 
-                // 🔒 Utilisation d'un PlacementValidator solide avec GridPlacer2D
                 if (!PlacementValidator.IsPositionClear(placePos, GridPlacer2D.Instance.terrainMap, GridPlacer2D.Instance.obstacleMap))
                 {
                     Debug.Log("❌ Emplacement invalide : zone bloquée (bâtiments, obstacles, eau).");
@@ -187,6 +184,12 @@ public class BuildManager : MonoBehaviour
                 {
                     newObj.AddComponent<BoxCollider2D>();
                     Debug.Log($"🧩 BoxCollider2D ajouté automatiquement à {newObj.name}");
+                }
+
+                ColliderSettings settings = newObj.GetComponent<ColliderSettings>();
+                if (settings != null)
+                {
+                    settings.ApplyColliderSettings();  // Application directe du collider settings à l'instance
                 }
 
                 BuildingIdentifier identifier = newObj.AddComponent<BuildingIdentifier>();
@@ -283,6 +286,17 @@ public class BuildManager : MonoBehaviour
             script.enabled = false;
     }
 
+    private void SetGhostColor(Color color)
+    {
+        if (ghostInstance == null) return;
+
+        SpriteRenderer[] renderers = ghostInstance.GetComponentsInChildren<SpriteRenderer>();
+        foreach (var renderer in renderers)
+        {
+            renderer.color = new Color(color.r, color.g, color.b, 0.5f);
+        }
+    }
+
     private bool IsClickOnUIButton()
     {
         if (EventSystem.current.IsPointerOverGameObject())
@@ -312,6 +326,9 @@ public class BuildManager : MonoBehaviour
                 ghostPos = offset.GetOffsetPosition(ghostPos);
 
             ghostInstance.transform.position = ghostPos;
+
+            bool isValid = PlacementValidator.IsPositionClear(ghostPos, GridPlacer2D.Instance.terrainMap, GridPlacer2D.Instance.obstacleMap);
+            SetGhostColor(isValid ? Color.green : Color.red);
         }
 
         if (mainCamera == null)

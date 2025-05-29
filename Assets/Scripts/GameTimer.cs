@@ -29,18 +29,6 @@ public class GameTimer : MonoBehaviour
 
     void Update()
     {
-        // Gestion des touches
-        if (Input.GetKeyDown(KeyCode.P))
-        {
-            isPaused = !isPaused;
-            Debug.Log(isPaused ? "⏸️ Jeu en pause" : "▶️ Jeu repris");
-        }
-
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            isAccelerated = !isAccelerated;
-            Debug.Log(isAccelerated ? "⏩ Accélération activée" : "⏱️ Retour à la vitesse normale");
-        }
 
         if (!isPaused)
         {

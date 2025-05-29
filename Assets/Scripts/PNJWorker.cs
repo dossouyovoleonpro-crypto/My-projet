@@ -32,7 +32,7 @@ public class PNJWorker : MonoBehaviour
             PNJAdvenceWorker advanceWorker = GetComponent<PNJAdvenceWorker>();
             if (advanceWorker != null && advanceWorker.IsWorking)
             {
-                yield return new WaitForSeconds(1f);
+                yield return new WaitForSeconds(1f / TimeManager.Instance.timeScale);  // Temps ajusté
                 continue;
             }
 
@@ -54,7 +54,7 @@ public class PNJWorker : MonoBehaviour
                     occupiedTiles.Remove(targetTile.Value);
                 }
             }
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(1f / TimeManager.Instance.timeScale);
         }
     }
 
@@ -66,7 +66,7 @@ public class PNJWorker : MonoBehaviour
 
         isWorking = true;
         float timer = 0f;
-        while (timer < workDuration && target != null)
+        while (timer < workDuration / TimeManager.Instance.timeScale && target != null)
         {
             transform.position = target.transform.position;
             timer += Time.deltaTime;
@@ -94,7 +94,7 @@ public class PNJWorker : MonoBehaviour
 
         isWorking = true;
         float timer = 0f;
-        while (timer < workDuration)
+        while (timer < workDuration / TimeManager.Instance.timeScale)
         {
             transform.position = worldPos;
             timer += Time.deltaTime;
@@ -199,7 +199,7 @@ public class PNJWorker : MonoBehaviour
     {
         while (Vector3.Distance(transform.position, destination) > 0.1f)
         {
-            transform.position = Vector3.MoveTowards(transform.position, destination, Time.deltaTime * 2f);
+            transform.position = Vector3.MoveTowards(transform.position, destination, Time.deltaTime * 2f * TimeManager.Instance.timeScale);
             yield return null;
         }
     }

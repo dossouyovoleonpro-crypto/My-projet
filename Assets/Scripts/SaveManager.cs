@@ -37,6 +37,13 @@ public class SaveData
 {
     public List<BuildingData> buildings = new List<BuildingData>();
     public TileDeletionData tileDeletions = new TileDeletionData();
+
+    public int totalWood;
+    public int totalStone;
+    public int totalIron;
+    public int totalGold;
+    public int totalFood;
+    public int totalPopulation = 3;
 }
 
 [System.Serializable]
@@ -97,6 +104,14 @@ public class SaveManager : MonoBehaviour
         string json = JsonUtility.ToJson(currentSaveData, true);
         File.WriteAllText(savePath, json);
 
+
+        currentSaveData.totalWood = StatManager.Instance.totalWood;
+        currentSaveData.totalStone = StatManager.Instance.totalStone;
+        currentSaveData.totalIron = StatManager.Instance.totalIron;
+        currentSaveData.totalGold = StatManager.Instance.totalGold;
+        currentSaveData.totalFood = StatManager.Instance.totalFood;
+        currentSaveData.totalPopulation = StatManager.Instance.totalPopulation;
+
         //Debug.Log($"✅ [SaveManager] Sauvegarde effectuée à : {savePath}");
     }
 
@@ -110,9 +125,18 @@ public class SaveManager : MonoBehaviour
 
     string json = File.ReadAllText(savePath);
     currentSaveData = JsonUtility.FromJson<SaveData>(json);
+    
+    StatManager.Instance.totalWood = currentSaveData.totalWood;
+    StatManager.Instance.totalStone = currentSaveData.totalStone;
+    StatManager.Instance.totalIron = currentSaveData.totalIron;
+    StatManager.Instance.totalGold = currentSaveData.totalGold;
+    StatManager.Instance.totalFood = currentSaveData.totalFood;
+    StatManager.Instance.totalPopulation = currentSaveData.totalPopulation;
+
+    StatManager.Instance.UpdateStatsUI();
 
     // Supprimer tous les bâtiments existants
-    string[] tagsToClear = { "Building", "Feu", "Mairie" };
+        string[] tagsToClear = { "Building", "Feu", "Mairie" };
     foreach (string tag in tagsToClear)
     {
         foreach (var building in GameObject.FindGameObjectsWithTag(tag))

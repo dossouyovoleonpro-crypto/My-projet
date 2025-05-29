@@ -42,6 +42,13 @@ public class MenuButton : MonoBehaviour
         menuPanel.SetActive(!isActive);
     }
 
+    void OpenStats()
+    {
+        menuPanel.SetActive(false);  
+        StatManager.Instance.ToggleStatsPanel(); 
+    }
+
+
     void CloseMenu()
     {
         menuPanel.SetActive(false);
@@ -74,12 +81,5 @@ public class MenuButton : MonoBehaviour
         menuPanel.SetActive(false);  // Ferme le menu principal
         questPanel.SetActive(true);  // Ouvre le panneau Quête
         Debug.Log("📜 Panneau Quêtes ouvert.");
-    }
-
-
-    void OpenStats()
-    {
-        Debug.Log("📊 Ouverture des statistiques...");
-        // Implémente l'affichage des statistiques ici
     }
 }

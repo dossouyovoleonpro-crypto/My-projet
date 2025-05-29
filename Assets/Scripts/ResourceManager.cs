@@ -63,7 +63,7 @@ public class ResourceManager : MonoBehaviour
 
     void Start()
     {
-
+        StatManager.Instance.AddPopulation(3);
         UpdateUI();
     }
 
@@ -82,6 +82,7 @@ public class ResourceManager : MonoBehaviour
     public void AddPopulation(int amount)
     {
         population += amount;
+        StatManager.Instance.AddPopulation(amount);
         UpdateUI();
     }
 
@@ -100,6 +101,7 @@ public class ResourceManager : MonoBehaviour
     public void AddWood(int amount)
     {
         wood = Mathf.Min(wood + amount, MaxCapacity);
+        StatManager.Instance.AddWood(amount); 
         UpdateUI();
     }
 
@@ -112,6 +114,7 @@ public class ResourceManager : MonoBehaviour
     public void AddFood(int amount)
     {
         food = Mathf.Min(food + amount, MaxCapacity);
+        StatManager.Instance.AddFood(amount); 
         UpdateUI();
     }
 
@@ -124,6 +127,7 @@ public class ResourceManager : MonoBehaviour
     public void AddStone(int amount)
     {
         stone = Mathf.Min(stone + amount, MaxCapacity);
+        StatManager.Instance.AddStone(amount); 
         UpdateUI();
     }
 
@@ -136,6 +140,7 @@ public class ResourceManager : MonoBehaviour
     public void AddIron(int amount)
     {
         iron = Mathf.Min(iron + amount, MaxCapacity);
+        StatManager.Instance.AddIron(amount); 
         UpdateUI();
     }
 
@@ -148,6 +153,7 @@ public class ResourceManager : MonoBehaviour
     public void AddGold(int amount)
     {
         gold = Mathf.Min(gold + amount, MaxCapacity);
+        StatManager.Instance.AddGold(amount); 
         UpdateUI();
     }
 

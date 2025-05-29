@@ -97,7 +97,7 @@ public class SaveManager : MonoBehaviour
         string json = JsonUtility.ToJson(currentSaveData, true);
         File.WriteAllText(savePath, json);
 
-        Debug.Log($"✅ [SaveManager] Sauvegarde effectuée à : {savePath}");
+        //Debug.Log($"✅ [SaveManager] Sauvegarde effectuée à : {savePath}");
     }
 
     public void LoadGame(bool skipTileDeletions = false)
@@ -143,13 +143,11 @@ public class SaveManager : MonoBehaviour
 
                 if (bData.prefabName.ToLower().Contains("maison"))
                 {
-                    ResourceManager.Instance.AddPopulation(0);
-                    BuildManager.Instance.SpawnPNJsAround(bData.position, 1, newObj.transform);
+                    BuildManager.Instance.SpawnPNJsAround(bData.position, 3, newObj.transform);
                 }
                 else if (bData.prefabName.ToLower().Contains("foyer"))
                 {
-                    ResourceManager.Instance.AddPopulation(0);
-                    BuildManager.Instance.SpawnPNJsAround(bData.position, 2, newObj.transform);
+                    BuildManager.Instance.SpawnPNJsAround(bData.position, 5, newObj.transform);
                 }
 
                 if (newObj.GetComponent<Collider2D>() == null)
@@ -175,7 +173,7 @@ public class SaveManager : MonoBehaviour
             if (obstacleMap != null)
             {
                 obstacleMap.SetTile(pos, null);
-                Debug.Log($"🗑️ [SaveManager] Suppression de la Tile Ressource à : {pos}");
+                //Debug.Log($"🗑️ [SaveManager] Suppression de la Tile Ressource à : {pos}");
             }
         }
     }
@@ -191,7 +189,7 @@ public class SaveManager : MonoBehaviour
         if (!currentSaveData.tileDeletions.deletedTiles.Contains(serializablePos))
         {
             currentSaveData.tileDeletions.deletedTiles.Add(serializablePos);
-            Debug.Log($"🗑️ [SaveManager] Tile supprimée enregistrée à : {tilePosition}");
+            //Debug.Log($"🗑️ [SaveManager] Tile supprimée enregistrée à : {tilePosition}");
             SaveGame(); // Sauvegarde immédiate après suppression
         }
     }

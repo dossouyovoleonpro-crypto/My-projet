@@ -178,6 +178,8 @@ public class BuildManager : MonoBehaviour
                 else if (selectedPrefab.name.Contains("chemin")) newObj.tag = "Chemin";
                 else newObj.tag = "Building";
 
+                QuestProgressChecker.Instance.CheckQuestProgress(newObj);
+
                 newObj.layer = LayerMask.NameToLayer("Building");
 
                 if (newObj.GetComponent<Collider2D>() == null)
@@ -218,7 +220,7 @@ public class BuildManager : MonoBehaviour
                 if (saveManager != null)
                 {
                     saveManager.SaveGame();
-                    Debug.Log("💾 Bâtiment sauvegardé immédiatement après placement.");
+                    //Debug.Log("💾 Bâtiment sauvegardé immédiatement après placement.");
                 }
                 else
                 {

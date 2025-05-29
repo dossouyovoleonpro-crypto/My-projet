@@ -40,7 +40,7 @@ public class PNJAdvenceWorker : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log($"❌ [{gameObject.name}] Aucune ressource bâtiment détectée à proximité.");
+                    //Debug.Log($"❌ [{gameObject.name}] Aucune ressource bâtiment détectée à proximité.");
                 }
             }
             yield return new WaitForSeconds(1f);
@@ -55,17 +55,17 @@ public class PNJAdvenceWorker : MonoBehaviour
 
         foreach (var obj in allObjects)
         {
-            Debug.Log($"🔍 Vérification objet : {obj.name}");
+            //Debug.Log($"🔍 Vérification objet : {obj.name}");
 
             if (!IsResource(obj))
             {
-                Debug.Log($"⛔ {obj.name} n'est pas une ressource bâtiment.");
+                //Debug.Log($"⛔ {obj.name} n'est pas une ressource bâtiment.");
                 continue;
             }
 
             if (occupiedResources.Contains(obj))
             {
-                Debug.Log($"⏳ {obj.name} déjà occupé.");
+                //Debug.Log($"⏳ {obj.name} déjà occupé.");
                 continue;
             }
 
@@ -100,43 +100,60 @@ public class PNJAdvenceWorker : MonoBehaviour
     IEnumerator WorkInResource(GameObject resource)
     {
         Vector3 targetPosition = resource.transform.position;
-        isWorking = true;
+        Debug.Log($"🚜 [{gameObject.name}] Se dirige vers {resource.name}");
 
-        while (Vector3.Distance(transform.position, targetPosition) > 0.1f)
+        while (resource != null && Vector3.Distance(transform.position, targetPosition) > 0.1f)
         {
             transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * 2f);
             yield return null;
         }
 
+        if (resource == null)
+        {
+            Debug.LogWarning($"❌ [{gameObject.name}] La ressource a été détruite avant d'arriver.");
+            yield break; // Arrête la coroutine proprement
+        }
+
+        Debug.Log($"⛏️ [{gameObject.name}] Commence le travail dans {resource.name}");
+        isWorking = true;
         float timer = 0f;
         while (timer < workDuration)
         {
+            if (resource == null)
+            {
+                Debug.LogWarning($"❌ [{gameObject.name}] La ressource a été détruite pendant le travail.");
+                isWorking = false;
+                yield break;
+            }
+
             transform.position = targetPosition;
             timer += Time.deltaTime;
             yield return null;
         }
 
-        switch (resource.name)
+        // Ajoute la ressource uniquement si elle existe encore
+        if (resource != null)
         {
-            case string s when s.StartsWith("Ferme", System.StringComparison.OrdinalIgnoreCase):
-                resourceManager.AddFood(20);
-                Debug.Log($"🍽️ [{gameObject.name}] +20 Nourriture depuis {resource.name}");
-                break;
-            case string s when s.StartsWith("Pierre", System.StringComparison.OrdinalIgnoreCase):
-                resourceManager.AddStone(40);
-                Debug.Log($"🪨 [{gameObject.name}] +40 Pierre depuis {resource.name}");
-                break;
-            case string s when s.StartsWith("or", System.StringComparison.OrdinalIgnoreCase):
-                resourceManager.AddGold(40);
-                Debug.Log($"💰 [{gameObject.name}] +40 Or depuis {resource.name}");
-                break;
-            case string s when s.StartsWith("Fer", System.StringComparison.OrdinalIgnoreCase):
-                resourceManager.AddIron(40);
-                Debug.Log($"⚙️ [{gameObject.name}] +40 Fer depuis {resource.name}");
-                break;
+            switch (resource.name)
+            {
+                case "Ferme":
+                    resourceManager.AddFood(20);
+                    break;
+                case "Pierre":
+                    resourceManager.AddStone(40);
+                    break;
+                case "or":
+                    resourceManager.AddGold(40);
+                    break;
+                case "Fer":
+                    resourceManager.AddIron(40);
+                    break;
+            }
+
+            resourceCooldowns[resource] = Time.time + cooldownDuration;
+            Debug.Log($"⏳ [{resource.name}] est en cooldown pendant {cooldownDuration}s");
         }
 
-        resourceCooldowns[resource] = Time.time + cooldownDuration;
         isWorking = false;
     }
 }
